@@ -1,0 +1,291 @@
+/**
+ * edoc design tokens — DESIGN.md sections 3–6.
+ * This is the single source of truth for color, type, spacing, motion,
+ * and geometry. tailwind.config.ts reads these via var(...) references;
+ * it never repeats a literal value from this file.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- */
+  /* 3. Color — neutrals (fixed, never themed)                        */
+  /* ---------------------------------------------------------------- */
+  --void: #0b0c0e; /* page background */
+  --panel: #141619; /* panels, editor surface */
+  --raised: #1d2024; /* cards, hover states, inputs */
+  --line: #2a2e34; /* all hairlines, 1px only */
+  --line-hi: #3a404a; /* hairline on hover/focus */
+  --text-hi: #e8e6e1; /* primary text — bone, never pure white */
+  --text-mid: #a0a6af; /* secondary */
+  --text-lo: #6b717a; /* telemetry, timestamps, disabled */
+
+  /* Semantic (fixed, never themed) */
+  --pass: #4ade80; /* tests passing. ONLY this. */
+  --fail: #e5484d; /* tests failing, damage taken */
+
+  /* Accent (themed per language) — default: no language selected.
+     --accent-rgb is the same hue as an "R, G, B" triplet so --accent-dim
+     can be a plain rgba() mix — reliable across browsers, unlike
+     color-mix(), and it can never drift out of sync with --accent
+     since every themed block below sets both together. */
+  --accent: #e8e6e1; /* bone — monochrome mode */
+  --accent-rgb: 232, 230, 225;
+  --accent-dim: rgba(var(--accent-rgb), 0.4); /* same hue, 40% opacity — fills and glows */
+  --accent-text: #e8e6e1;
+
+  /* ---------------------------------------------------------------- */
+  /* 4. Typography                                                    */
+  /* ---------------------------------------------------------------- */
+  /* Each composes the next/font-loaded face (see app/layout.tsx) with
+     a static fallback, so this stays the single source of truth. */
+  --font-display: var(--font-display-src), 'Archivo', sans-serif; /* variable, use width + weight axes */
+  --font-ui: var(--font-ui-src), 'Inter', sans-serif; /* 400, 500 */
+  --font-code: var(--font-code-src), 'JetBrains Mono', monospace; /* 400, 700 — the user's code */
+  --font-hud: var(--font-hud-src), 'IBM Plex Mono', monospace; /* 400, 500 — the machine's voice */
+
+  /* Scale: size / weight-or-width / case / tracking, per role.
+     -width is a font-stretch value on Archivo's wdth axis (62–125,
+     see app/layout.tsx) — 100 is normal, >100 expanded, <100 condensed. */
+  --text-boss-size: clamp(48px, 6vw, 72px);
+  --text-boss-weight: 800;
+  --text-boss-width: 125%; /* expanded */
+  --text-boss-tracking: -0.02em;
+  --text-boss-leading: 1.05;
+
+  --text-zone-title-size: 32px;
+  --text-zone-title-weight: 700;
+  --text-zone-title-width: 125%; /* expanded */
+  --text-zone-title-tracking: -0.01em;
+  --text-zone-title-leading: 1.05;
+
+  --text-stat-size: clamp(24px, 3vw, 40px);
+  --text-stat-weight: 700;
+  --text-stat-width: 75%; /* condensed */
+  --text-stat-tracking: -0.01em;
+  --text-stat-leading: 1.05;
+
+  /* Offsets the negative letter-spacing above so multi-word display
+     type doesn't collapse into what reads as one word. */
+  --text-display-word-spacing: 0.12em;
+
+  --text-label-size: 12px;
+  --text-label-weight: 500;
+  --text-label-tracking: 0.12em;
+  --text-label-leading: 1.5;
+
+  --text-body-size: 15px;
+  --text-body-weight: 400;
+  --text-body-tracking: 0em;
+  --text-body-leading: 1.5;
+
+  --text-button-size: 14px;
+  --text-button-weight: 500;
+  --text-button-tracking: 0.06em;
+  --text-button-leading: 1.5;
+
+  --text-telemetry-size: 12px;
+  --text-telemetry-weight: 400;
+  --text-telemetry-tracking: 0.08em;
+  --text-telemetry-leading: 1.5;
+
+  --text-editor-size: 14px;
+  --text-editor-weight: 400;
+  --text-editor-tracking: 0em;
+  --text-editor-leading: 1.7;
+
+  /* ---------------------------------------------------------------- */
+  /* 5. Geometry                                                      */
+  /* ---------------------------------------------------------------- */
+  --clip-panel: polygon(
+    0 14px,
+    14px 0,
+    100% 0,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0 100%
+  );
+  --clip-btn: polygon(
+    0 8px,
+    8px 0,
+    100% 0,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0 100%
+  );
+
+  --border-width: 1px;
+  --corner-bracket-size: 14px;
+  --corner-bracket-inset: 6px;
+  --divider-skew: 4deg;
+  --grain-opacity: 0.03;
+
+  /* Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 — this is
+     Tailwind's default 4px-based numeric scale (p-1..p-16), so no
+     custom spacing tokens are defined here. See tailwind.config.ts. */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* ---------------------------------------------------------------- */
+  /* 6. Motion                                                        */
+  /* ---------------------------------------------------------------- */
+  --dur-fast: 120ms; /* hover, focus, toggle */
+  --dur-base: 180ms; /* panel state change */
+  --dur-slow: 300ms; /* damage, transitions */
+  --dur-pulse: 1000ms; /* low-HP bar pulse, expiring-timer pulse — see .pulse below */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-snap: cubic-bezier(0.34, 1.2, 0.64, 1); /* card release only */
+}
+
+/* ---------------------------------------------------------------- */
+/* Accent themes — one per language. Applied via [data-lang="..."]   */
+/* on any ancestor element (usually <html> or a root wrapper).       */
+/* --accent-dim is re-derived in every block below (never a literal  */
+/* color) so it always tracks that block's own --accent-rgb — custom */
+/* properties substitute var() at the scope where they're declared,  */
+/* not per-descendant, so this can't just live at :root once.        */
+/* --accent-text is hand-tuned to hit 4.5:1 on --void.                */
+/* ---------------------------------------------------------------- */
+
+[data-lang='python'] {
+  --accent: #e89b2c;
+  --accent-rgb: 232, 155, 44;
+  --accent-text: #ffb95c;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='javascript'] {
+  --accent: #e5d63c;
+  --accent-rgb: 229, 214, 60;
+  --accent-text: #f0e777;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='typescript'] {
+  --accent: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+  --accent-text: #7fabfa;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='go'] {
+  --accent: #22d3ee;
+  --accent-rgb: 34, 211, 238;
+  --accent-text: #7de6f6;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='rust'] {
+  --accent: #f26430;
+  --accent-rgb: 242, 100, 48;
+  --accent-text: #ff9169;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='java'] {
+  --accent: #d9544f;
+  --accent-rgb: 217, 84, 79;
+  --accent-text: #f08b86;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='cpp'] {
+  --accent: #ec4899;
+  --accent-rgb: 236, 72, 153;
+  --accent-text: #f57eb8;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='sql'] {
+  --accent: #8b5cf6;
+  --accent-rgb: 139, 92, 246;
+  --accent-text: #b79bfa;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+/* ---------------------------------------------------------------- */
+/* Structural utility classes — geometry that can't be expressed as  */
+/* a single Tailwind theme value (clip-path shape, corner brackets). */
+/* ---------------------------------------------------------------- */
+
+/* Width axis + word-spacing for the display roles. Tailwind's fontSize
+   theme (tailwind.config.ts) generates .text-boss/.text-zone-title/
+   .text-stat with size/line-height/tracking/weight already; font-stretch
+   isn't one of the properties Tailwind's fontSize option object accepts,
+   so it's added here as a second, additive declaration on the same
+   class names rather than duplicated as a new utility. */
+.text-boss,
+.text-zone-title,
+.text-stat {
+  word-spacing: var(--text-display-word-spacing);
+}
+.text-boss {
+  font-stretch: var(--text-boss-width);
+}
+.text-zone-title {
+  font-stretch: var(--text-zone-title-width);
+}
+.text-stat {
+  font-stretch: var(--text-stat-width);
+}
+
+.clip-panel {
+  clip-path: var(--clip-panel);
+}
+.clip-btn {
+  clip-path: var(--clip-btn);
+}
+
+.corner-bracket {
+  position: absolute;
+  width: var(--corner-bracket-size);
+  height: var(--corner-bracket-size);
+  border-color: var(--accent);
+  pointer-events: none;
+}
+.corner-bracket--tl {
+  top: var(--corner-bracket-inset);
+  left: var(--corner-bracket-inset);
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.corner-bracket--tr {
+  top: var(--corner-bracket-inset);
+  right: var(--corner-bracket-inset);
+  border-top: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+.corner-bracket--bl {
+  bottom: var(--corner-bracket-inset);
+  left: var(--corner-bracket-inset);
+  border-bottom: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.corner-bracket--br {
+  bottom: var(--corner-bracket-inset);
+  right: var(--corner-bracket-inset);
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+
+/* Low HP and expiring timers no longer change color (--warn is gone) —
+   they pulse opacity instead, at --dur-pulse. Low HP additionally
+   turns the HP number --fail; that's applied where the number renders,
+   not here. */
+@keyframes pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.pulse {
+  animation: pulse-opacity var(--dur-pulse) ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

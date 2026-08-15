@@ -46,8 +46,9 @@ Define these as CSS custom properties on `:root`. Never hardcode a hex outside t
 ```css
 --pass:        #4ADE80;  /* tests passing. ONLY this. */
 --fail:        #E5484D;  /* tests failing, damage taken */
---warn:        #E8A33D;  /* low HP, expiring timers */
 ```
+
+There is no `--warn`. Low HP and expiring timers are states, not colors: low HP (<20%) pulses the HP bar at 1s and turns the HP number `--fail`; an expiring timer pulses rather than changing color. Motion carries the urgency, not a third semantic hue.
 
 `--pass` is sacred. It appears nowhere decorative. If green shows up, a test passed. Same for `--fail`.
 
