@@ -1,69 +1,71 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import { HudFrame, Button, Telemetry } from '@/components/hud';
+import { ScrollReveal, TextReveal, LenisScroll } from '@/components/motion';
+import HeroLoop from '@/components/landing/HeroLoop';
+
+const PILLARS = [
+  {
+    title: 'Multiplayer',
+    body: 'Duels, clan raids on a shared multi-file repo, ghost replays. Every competitor out there is single-player. edoc isn’t.',
+  },
+  {
+    title: 'Artifacts over badges',
+    body: 'The certificate links to working code — a CLI, a parser, a small API you actually shipped, not a completion checkbox.',
+  },
+  {
+    title: 'Failure is the content',
+    body: 'Debugging is the combat system. Bugs are the lesson, not the punishment — reading a stack trace is the skill being taught.',
+  },
+];
+
+/**
+ * Showcase register, monochrome (DESIGN.md v2 §9 Landing): no
+ * per-language accent exists until a language is actually chosen, so
+ * this page never sets data-lang. Lenis mounts here (and on the
+ * coaster, nowhere else). One CTA, no feature-card grid, no gradient
+ * hero, no testimonials.
+ */
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-void">
+      <LenisScroll />
+      <HudFrame
+        brand={
+          <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
+        }
+        rail={<Telemetry>Guided learning · arcade combat</Telemetry>}
+      >
+        <main className="mx-auto flex max-w-5xl flex-col gap-32 px-8 py-20">
+          <section className="flex flex-col gap-10">
+            <div className="flex flex-col gap-4">
+              <TextReveal as="h1" className="text-boss text-text-hi" text="FIGHT YOUR WAY THROUGH THE LANGUAGE" />
+              <p className="max-w-xl text-body text-text-mid">
+                You pick a language, fight your way through it, and come out with proof you can actually code. Guided
+                learning with an arcade combat loop, real multiplayer, and an evidence-backed certificate.
+              </p>
+            </div>
+
+            <HeroLoop />
+
+            <div>
+              <Link href="/fight/py.core.loops.04">
+                <Button variant="primary">Start fighting</Button>
+              </Link>
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-16">
+            {PILLARS.map((pillar) => (
+              <ScrollReveal key={pillar.title} className="flex max-w-2xl flex-col gap-3">
+                <h2 className="text-zone-title text-text-hi">{pillar.title}</h2>
+                <p className="text-body text-text-mid">{pillar.body}</p>
+              </ScrollReveal>
+            ))}
+          </section>
+        </main>
+      </HudFrame>
     </div>
   );
 }
