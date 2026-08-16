@@ -9,6 +9,7 @@ interface TestOutputPanelProps {
   results: TestResult[] | null;
   /** Bump on every run so rows re-stagger their reveal. */
   revealKey: number;
+  className?: string;
 }
 
 /**
@@ -19,7 +20,7 @@ interface TestOutputPanelProps {
  * loop — one repaint, and prefers-reduced-motion zeroes both the
  * duration and the delay globally (styles/tokens.css).
  */
-export default function TestOutputPanel({ tests, results, revealKey }: TestOutputPanelProps) {
+export default function TestOutputPanel({ tests, results, revealKey, className = '' }: TestOutputPanelProps) {
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
@@ -33,9 +34,9 @@ export default function TestOutputPanel({ tests, results, revealKey }: TestOutpu
   }, [revealKey, results]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <Label>Test output</Label>
-      <div className="clip-panel flex flex-col gap-2 border border-line bg-panel p-4">
+    <div className={`flex min-h-0 flex-col gap-3 ${className}`}>
+      <Label className="shrink-0">Test output</Label>
+      <div className="clip-panel flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto border border-line bg-panel p-4">
         {tests.map((test, i) => {
           const result = results?.find((r) => r.testId === test.id);
           const settled = revealed && result !== undefined;

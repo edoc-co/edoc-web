@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { HudFrame, Button, Panel, Telemetry } from '@/components/hud';
+import { HudFrame, Button, Panel, Label, Telemetry } from '@/components/hud';
 import Editor from './Editor';
 import MonsterFrame from './MonsterFrame';
 import PlayerHud from './PlayerHud';
@@ -139,7 +139,12 @@ export default function FightScreen({ encounter }: FightScreenProps) {
   }, [encounter, resetFight]);
 
   return (
-    <div data-lang={encounter.language} className="min-h-screen bg-void">
+    // md:h-screen + md:overflow-y-auto: fits exactly at the 1920x1080
+    // target (no scrollbar appears, since content fits) but degrades
+    // to a real scrollbar rather than silently clipping content on
+    // shorter viewports where the editor's 420px floor plus the fixed
+    // boss/test-output heights genuinely don't all fit.
+    <div data-lang={encounter.language} className="flex flex-col bg-void md:h-screen md:overflow-y-auto">
       <HudFrame
         brand={
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
@@ -150,7 +155,17 @@ export default function FightScreen({ encounter }: FightScreenProps) {
           </Telemetry>
         }
       >
-        <main className="relative mx-auto flex max-w-5xl flex-col gap-4 px-6 py-4">
+        {/*
+          Layout target (DESIGN.md v2 §9, Part 1): max 1400px content,
+          centred, 32px page padding. Boss frame full width (~180px).
+          Below: editor ~72% / right rail ~28%, editor is the tallest
+          element on screen and fills all remaining vertical space
+          (min 420px). Test output is full width *below* that row,
+          fixed ~180px with its own scroll — not squeezed into the rail.
+          Fits one viewport at md+ with no page scroll; stacks and
+          scrolls normally below md (390px still has to work).
+        */}
+        <main className="relative mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-8 py-4 md:h-full">
           {vignetteKey > 0 && (
             <span
               key={vignetteKey}
@@ -167,8 +182,8 @@ export default function FightScreen({ encounter }: FightScreenProps) {
             attackMessage={attackMessage}
           />
 
-          <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-[1fr_320px]">
-            <Panel padding="none" className="h-full">
+          <div className="grid min-h-0 grid-cols-1 gap-4 md:flex-1 md:grid-cols-[72fr_28fr]">
+            <Panel padding="none" className="min-h-[420px] md:h-full">
               <Editor value={code} onChange={setCode} damageLine={failingLine} />
             </Panel>
             <div className="flex flex-col gap-4">
@@ -179,9 +194,23 @@ export default function FightScreen({ encounter }: FightScreenProps) {
               <Button onClick={handleRun} disabled={running}>
                 {running ? 'Running…' : 'Run code'}
               </Button>
-              <TestOutputPanel tests={encounter.tests} results={lastResult?.results ?? null} revealKey={runKey} />
+              {/* Part 3 fills this with the hint card deck; reserved
+                  now so that landing doesn't reshuffle this layout. */}
+              <div className="flex min-h-0 flex-1 flex-col gap-2">
+                <Label>Hint deck</Label>
+                <div className="clip-panel flex flex-1 items-center justify-center border border-line bg-panel p-4">
+                  <Telemetry>No hints drawn yet</Telemetry>
+                </div>
+              </div>
             </div>
           </div>
+
+          <TestOutputPanel
+            tests={encounter.tests}
+            results={lastResult?.results ?? null}
+            revealKey={runKey}
+            className="h-[180px] shrink-0"
+          />
         </main>
       </HudFrame>
 

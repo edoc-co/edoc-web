@@ -31,7 +31,7 @@ export default function Editor({ value, onChange, damageLine }: EditorProps) {
     <CodeMirror
       value={value}
       onChange={onChange}
-      height="320px"
+      height="100%"
       theme="none"
       extensions={[python(), ...pythonEditorTheme, ...damageLineExtension]}
       basicSetup={{
