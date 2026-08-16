@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Archivo, Inter, JetBrains_Mono, IBM_Plex_Mono } from 'next/font/google';
+import ThemeProvider from '@/lib/theme/ThemeProvider';
+import { noFlashThemeScript } from '@/lib/theme/constants';
 import './globals.css';
 
 // These load into "-src" variables, not the token names directly —
@@ -50,9 +52,20 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html
       lang="en"
       className={`${archivo.variable} ${inter.variable} ${jetbrainsMono.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      // The no-flash script below sets data-theme on the client before
+      // React hydrates, and the server never renders that attribute —
+      // an intentional, expected mismatch (the standard pattern for
+      // avoiding a flash of the wrong theme), not a real bug.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Blocking (no async/defer) so data-theme is set before first
+            paint — no flash of the wrong theme. Reads localStorage
+            directly; ThemeProvider picks up whatever this sets. */}
+        <script dangerouslySetInnerHTML={{ __html: noFlashThemeScript() }} />
+      </head>
       <body className="min-h-full flex flex-col bg-void text-text-hi font-ui">
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

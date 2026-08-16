@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { HudFrame, Panel, Button, Pill, Label, Telemetry, CornerBrackets } from '@/components/hud';
+import MonsterFrame from '@/components/fight/MonsterFrame';
+import HpBar from '@/components/fight/HpBar';
 
 /** "rgb(r, g, b)" / "rgba(r, g, b, a)" -> "#RRGGBB" (+ alpha byte if < 1). */
 function colorToHex(resolved: string): string {
@@ -25,6 +27,8 @@ const SWATCHES: { token: string; name: string }[] = [
   { token: '--text-lo', name: 'text-lo' },
   { token: '--pass', name: 'pass' },
   { token: '--fail', name: 'fail' },
+  { token: '--gold', name: 'gold' },
+  { token: '--cyan', name: 'cyan' },
   { token: '--accent', name: 'accent' },
   { token: '--accent-dim', name: 'accent-dim' },
   { token: '--accent-text', name: 'accent-text' },
@@ -49,8 +53,8 @@ export default function StyleguidePage() {
   const [hexes, setHexes] = useState<Record<string, string>>({});
 
   // Reads each swatch's actual computed color rather than assuming a
-  // static hex, so themed tokens (accent, accent-dim, accent-text)
-  // stay correct when `lang` changes.
+  // static hex, so themed tokens (accent, accent-dim, accent-text, and
+  // every neutral) stay correct across both language and theme changes.
   useEffect(() => {
     const next: Record<string, string> = {};
     for (const s of SWATCHES) {
@@ -58,6 +62,18 @@ export default function StyleguidePage() {
       if (el) next[s.token] = colorToHex(getComputedStyle(el).backgroundColor);
     }
     setHexes(next);
+
+    // Re-read on theme change too — MutationObserver on <html data-theme>.
+    const observer = new MutationObserver(() => {
+      const updated: Record<string, string> = {};
+      for (const s of SWATCHES) {
+        const el = swatchRefs.current[s.token];
+        if (el) updated[s.token] = colorToHex(getComputedStyle(el).backgroundColor);
+      }
+      setHexes(updated);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
   }, [lang]);
 
   return (
@@ -85,6 +101,13 @@ export default function StyleguidePage() {
         }
       >
         <main className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-12">
+          <p className="text-body text-text-mid">
+            Use the theme switcher at the top right to check every section below in{' '}
+            <strong className="text-text-hi">default</strong>, <strong className="text-text-hi">dark</strong>, and{' '}
+            <strong className="text-text-hi">light</strong>. Light should read calm — near-zero glow, no gradients,
+            flat fills — that's intended, not a bug.
+          </p>
+
           {/* Colors */}
           <section className="flex flex-col gap-4">
             <Label>Color tokens</Label>
@@ -99,11 +122,45 @@ export default function StyleguidePage() {
                     style={{ background: `var(${s.token})` }}
                   />
                   <Telemetry>{s.name}</Telemetry>
-                  <span className="font-hud text-[11px] text-text-lo">
-                    {hexes[s.token] ?? '—'}
-                  </span>
+                  <span className="font-hud text-[11px] text-text-lo">{hexes[s.token] ?? '—'}</span>
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Glow */}
+          <section className="flex flex-col gap-4">
+            <Label>Glow (never on/near the editor)</Label>
+            <div className="flex flex-wrap gap-6">
+              <div
+                className="clip-panel flex h-20 w-40 items-center justify-center border border-accent bg-panel"
+                style={{ boxShadow: 'var(--glow-accent)' }}
+              >
+                <Telemetry>glow-accent</Telemetry>
+              </div>
+              <div
+                className="clip-panel flex h-20 w-40 items-center justify-center border border-gold bg-panel"
+                style={{ boxShadow: 'var(--glow-gold)' }}
+              >
+                <Telemetry>glow-gold</Telemetry>
+              </div>
+              <div
+                className="clip-panel flex h-20 w-40 items-center justify-center border border-cyan bg-panel"
+                style={{ boxShadow: 'var(--glow-cyan)' }}
+              >
+                <Telemetry>glow-cyan</Telemetry>
+              </div>
+              <div className="loot-glow loot-pulse clip-panel flex h-20 w-40 items-center justify-center border border-gold bg-panel">
+                <Telemetry>loot drop (pulsing)</Telemetry>
+              </div>
+            </div>
+          </section>
+
+          {/* Gradient chrome */}
+          <section className="flex flex-col gap-4">
+            <Label>Gradient chrome (flat fill in light theme)</Label>
+            <div className="chrome-surface clip-panel flex h-16 items-center border border-line px-4">
+              <Telemetry>.chrome-surface — two-stop, never the editor</Telemetry>
             </div>
           </section>
 
@@ -130,13 +187,13 @@ export default function StyleguidePage() {
                 <Label>Inactive panel</Label>
                 <p className="mt-2 text-body text-text-mid">
                   Flat --panel fill, 1px --line border, clipped top-left / bottom-right corners.
-                  No accent, no brackets.
+                  No accent, no brackets, no glow.
                 </p>
               </Panel>
               <Panel active>
                 <Label>Active panel</Label>
                 <p className="mt-2 text-body text-text-mid">
-                  Same panel, corner brackets in --accent mark it as the focused surface.
+                  Corner brackets in --accent, plus a soft --glow-accent — near-zero in light theme.
                 </p>
               </Panel>
             </div>
@@ -144,6 +201,37 @@ export default function StyleguidePage() {
               <CornerBrackets />
               <Telemetry>Corner brackets standalone, inset 6px</Telemetry>
             </Panel>
+          </section>
+
+          {/* Boss frame */}
+          <section className="flex flex-col gap-4">
+            <Label>Boss frame (ornamental — fantasy, not military)</Label>
+            <MonsterFrame
+              name="The Loop King"
+              hp={340}
+              maxHp={500}
+              hitFlashKey={0}
+              attackMessage={null}
+            />
+          </section>
+
+          {/* HP bars */}
+          <section className="flex flex-col gap-4">
+            <Label>HP bars</Label>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Telemetry className="w-32 shrink-0">Above 50%, glow</Telemetry>
+                <HpBar value={80} max={100} glowVar="--glow-accent" className="flex-1" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Telemetry className="w-32 shrink-0">Below 50%, no glow</Telemetry>
+                <HpBar value={40} max={100} glowVar="--glow-accent" className="flex-1" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Telemetry className="w-32 shrink-0">Below 20%, pulses</Telemetry>
+                <HpBar value={12} max={100} glowVar="--glow-accent" className="flex-1" />
+              </div>
+            </div>
           </section>
 
           {/* Buttons */}

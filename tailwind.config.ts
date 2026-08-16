@@ -23,9 +23,21 @@ const config: Config = {
         'text-lo': 'var(--text-lo)',
         pass: 'var(--pass)',
         fail: 'var(--fail)',
+        // Fixed energy colors, present in every theme, outside the
+        // per-language accent layer — DESIGN.md v2 §3.
+        gold: 'var(--gold)',
+        cyan: 'var(--cyan)',
         accent: 'var(--accent)',
         'accent-dim': 'var(--accent-dim)',
         'accent-text': 'var(--accent-text)',
+      },
+      boxShadow: {
+        'glow-accent': 'var(--glow-accent)',
+        'glow-gold': 'var(--glow-gold)',
+        'glow-cyan': 'var(--glow-cyan)',
+      },
+      backgroundImage: {
+        chrome: 'var(--chrome-surface)',
       },
       fontFamily: {
         display: ['var(--font-display)'],
@@ -107,6 +119,7 @@ const config: Config = {
         fast: 'var(--dur-fast)',
         base: 'var(--dur-base)',
         slow: 'var(--dur-slow)',
+        ghost: 'var(--dur-ghost)', // HP bar ghost segment trailing behind the drain
       },
       transitionTimingFunction: {
         out: 'var(--ease-out)',

@@ -1,39 +1,19 @@
 /**
- * edoc design tokens — DESIGN.md sections 3–6.
- * This is the single source of truth for color, type, spacing, motion,
- * and geometry. tailwind.config.ts reads these via var(...) references;
+ * edoc design tokens — DESIGN.md v2, sections 3–6.
+ * Single source of truth for color, type, spacing, motion, and
+ * geometry. tailwind.config.ts reads these via var(...) references;
  * it never repeats a literal value from this file.
+ *
+ * Color is theme-scoped: neutrals, semantics, and the two fixed energy
+ * colors (gold, cyan) all live inside [data-theme] blocks. Per-language
+ * accent is a separate layer on top ([data-lang]), with a light-theme
+ * override block since a dark-bg accent rarely hits 4.5:1 on a light
+ * bg. Everything else (type, geometry, motion) is theme-agnostic.
  */
 
 :root {
   /* ---------------------------------------------------------------- */
-  /* 3. Color — neutrals (fixed, never themed)                        */
-  /* ---------------------------------------------------------------- */
-  --void: #0b0c0e; /* page background */
-  --panel: #141619; /* panels, editor surface */
-  --raised: #1d2024; /* cards, hover states, inputs */
-  --line: #2a2e34; /* all hairlines, 1px only */
-  --line-hi: #3a404a; /* hairline on hover/focus */
-  --text-hi: #e8e6e1; /* primary text — bone, never pure white */
-  --text-mid: #a0a6af; /* secondary */
-  --text-lo: #6b717a; /* telemetry, timestamps, disabled */
-
-  /* Semantic (fixed, never themed) */
-  --pass: #4ade80; /* tests passing. ONLY this. */
-  --fail: #e5484d; /* tests failing, damage taken */
-
-  /* Accent (themed per language) — default: no language selected.
-     --accent-rgb is the same hue as an "R, G, B" triplet so --accent-dim
-     can be a plain rgba() mix — reliable across browsers, unlike
-     color-mix(), and it can never drift out of sync with --accent
-     since every themed block below sets both together. */
-  --accent: #e8e6e1; /* bone — monochrome mode */
-  --accent-rgb: 232, 230, 225;
-  --accent-dim: rgba(var(--accent-rgb), 0.4); /* same hue, 40% opacity — fills and glows */
-  --accent-text: #e8e6e1;
-
-  /* ---------------------------------------------------------------- */
-  /* 4. Typography                                                    */
+  /* 4. Typography — theme-agnostic                                   */
   /* ---------------------------------------------------------------- */
   /* Each composes the next/font-loaded face (see app/layout.tsx) with
      a static fallback, so this stays the single source of truth. */
@@ -93,7 +73,7 @@
   --text-editor-leading: 1.7;
 
   /* ---------------------------------------------------------------- */
-  /* 5. Geometry                                                      */
+  /* 5. Geometry — theme-agnostic                                     */
   /* ---------------------------------------------------------------- */
   --clip-panel: polygon(
     0 14px,
@@ -131,24 +111,154 @@
   --space-64: 64px;
 
   /* ---------------------------------------------------------------- */
-  /* 6. Motion                                                        */
+  /* 6. Motion — theme-agnostic                                       */
   /* ---------------------------------------------------------------- */
   --dur-fast: 120ms; /* hover, focus, toggle */
   --dur-base: 180ms; /* panel state change */
   --dur-slow: 300ms; /* damage, transitions */
+  --dur-ghost: 500ms; /* HP bar ghost segment trailing behind the primary drain */
   --dur-pulse: 1000ms; /* low-HP bar pulse, expiring-timer pulse — see .pulse below */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --ease-snap: cubic-bezier(0.34, 1.2, 0.64, 1); /* card release only */
 }
 
+/* ================================================================== */
+/* 3. Color — theme-scoped                                            */
+/*                                                                     */
+/* :root carries the same values as [data-theme='default'] so there's  */
+/* a correct paint even before the no-flash inline script (see         */
+/* app/layout.tsx) or ThemeProvider have run. No values are             */
+/* duplicated in spirit — :root IS the default theme's block.          */
+/* ================================================================== */
+
+:root,
+[data-theme='default'] {
+  /* Warm dark — the signature look: deep indigo-violet, not grey-black. */
+  --void: #12101c;
+  --void-rgb: 18, 16, 28;
+  --panel: #1a1728;
+  --raised: #241f35;
+  --line: #332b4a;
+  --line-hi: #4a3f6b;
+  --text-hi: #f0eae2;
+  --text-hi-rgb: 240, 234, 226;
+  --text-mid: #a79fb8;
+  --text-lo: #6e6684;
+
+  --pass: #4ade80;
+  --fail: #ff5c6a;
+  --fail-rgb: 255, 92, 106;
+
+  /* Energy colors — fixed, present in every theme, outside the
+     per-language accent layer. Gold: loot, keys, rewards. Cyan: the
+     coaster, ticker, multiplayer. */
+  --gold: #f0b429;
+  --gold-rgb: 240, 180, 41;
+  --cyan: #22d3ee;
+  --cyan-rgb: 34, 211, 238;
+
+  /* Glow is allowed here (and in dark), never near the editor. */
+  --glow-accent: 0 0 20px rgba(var(--accent-rgb), 0.45);
+  --glow-gold: 0 0 22px rgba(var(--gold-rgb), 0.45);
+  --glow-cyan: 0 0 20px rgba(var(--cyan-rgb), 0.4);
+
+  /* Two-stop gradient, chrome only — never the editor surface. Light
+     theme redefines this as a flat fill (see below). */
+  --chrome-surface: linear-gradient(135deg, var(--panel), var(--raised));
+
+  /* Monochrome mode (no language selected): the "accent" is just this
+     theme's ink color. Overridden per-language below. */
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-theme='dark'] {
+  /* Neutral, high-contrast, low-stimulus — for long sessions. Same
+     structure as default, just without the warm hue. */
+  --void: #0b0c0e;
+  --void-rgb: 11, 12, 14;
+  --panel: #141619;
+  --raised: #1d2024;
+  --line: #2a2e34;
+  --line-hi: #3a404a;
+  --text-hi: #e8e6e1;
+  --text-hi-rgb: 232, 230, 225;
+  --text-mid: #a0a6af;
+  --text-lo: #6b717a;
+
+  --pass: #4ade80;
+  --fail: #e5484d;
+  --fail-rgb: 229, 72, 77;
+
+  --gold: #d9a21b;
+  --gold-rgb: 217, 162, 27;
+  --cyan: #22d3ee;
+  --cyan-rgb: 34, 211, 238;
+
+  --glow-accent: 0 0 20px rgba(var(--accent-rgb), 0.4);
+  --glow-gold: 0 0 20px rgba(var(--gold-rgb), 0.4);
+  --glow-cyan: 0 0 18px rgba(var(--cyan-rgb), 0.35);
+
+  --chrome-surface: linear-gradient(135deg, var(--panel), var(--raised));
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-theme='light'] {
+  /* Warm paper, never pure white. A comfort option — calmer than the
+     other two on purpose. No glow, no gradients, hairlines + flat
+     fills only. Don't fake the arcade look here with heavy shadows. */
+  --void: #f5f1e8;
+  --void-rgb: 245, 241, 232;
+  --panel: #fdfbf6;
+  --raised: #ebe4d6;
+  --line: #d8cfbe;
+  --line-hi: #bfb39c;
+  --text-hi: #1c1828;
+  --text-hi-rgb: 28, 24, 40;
+  --text-mid: #55506a;
+  --text-lo: #857e99;
+
+  --pass: #15803d;
+  --fail: #c62828;
+  --fail-rgb: 198, 40, 40;
+
+  --gold: #b07d0a;
+  --gold-rgb: 176, 125, 10;
+  --cyan: #0e7490;
+  --cyan-rgb: 14, 116, 144;
+
+  /* Glow is near-zero here: fully off. */
+  --glow-accent: none;
+  --glow-gold: none;
+  --glow-cyan: none;
+
+  /* No gradients on chrome in light theme — flat fill instead. This is
+     still a valid `background` value (color, not just image). */
+  --chrome-surface: var(--panel);
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
 /* ---------------------------------------------------------------- */
-/* Accent themes — one per language. Applied via [data-lang="..."]   */
-/* on any ancestor element (usually <html> or a root wrapper).       */
-/* --accent-dim is re-derived in every block below (never a literal  */
-/* color) so it always tracks that block's own --accent-rgb — custom */
-/* properties substitute var() at the scope where they're declared,  */
-/* not per-descendant, so this can't just live at :root once.        */
-/* --accent-text is hand-tuned to hit 4.5:1 on --void.                */
+/* Per-language accent — a layer on top of the theme, works in all   */
+/* three. Base blocks (no theme qualifier) serve default AND dark —   */
+/* both are dark-void themes, so one set of values reads fine on      */
+/* both. light needs its own darker/desaturated variant per language  */
+/* to hit 4.5:1 on a light --void; see the [data-theme='light']       */
+/* overrides below. --accent-dim is re-derived everywhere it's set    */
+/* (never a literal color) so it always tracks that block's own       */
+/* --accent-rgb — custom properties substitute var() at the scope     */
+/* where they're declared, not per-descendant, so this can't just     */
+/* live in one place.                                                 */
 /* ---------------------------------------------------------------- */
 
 [data-lang='python'] {
@@ -200,9 +310,62 @@
   --accent-dim: rgba(var(--accent-rgb), 0.4);
 }
 
+/* Light-theme accent variants — darkened/desaturated per language so
+   each hits 4.5:1 on --void (#F5F1E8), not a reuse of the dark hex.
+   --accent-text equals --accent here: on a light void, the readable
+   direction is darker, not lighter, so the same value serves both. */
+[data-theme='light'] [data-lang='python'] {
+  --accent: #92400e;
+  --accent-rgb: 146, 64, 14;
+  --accent-text: #92400e;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='javascript'] {
+  --accent: #78350f;
+  --accent-rgb: 120, 53, 15;
+  --accent-text: #78350f;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='typescript'] {
+  --accent: #1d4ed8;
+  --accent-rgb: 29, 78, 216;
+  --accent-text: #1d4ed8;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='go'] {
+  --accent: #0e7490;
+  --accent-rgb: 14, 116, 144;
+  --accent-text: #0e7490;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='rust'] {
+  --accent: #9a3412;
+  --accent-rgb: 154, 52, 18;
+  --accent-text: #9a3412;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='java'] {
+  --accent: #991b1b;
+  --accent-rgb: 153, 27, 27;
+  --accent-text: #991b1b;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='cpp'] {
+  --accent: #9d174d;
+  --accent-rgb: 157, 23, 77;
+  --accent-text: #9d174d;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-theme='light'] [data-lang='sql'] {
+  --accent: #6d28d9;
+  --accent-rgb: 109, 40, 217;
+  --accent-text: #6d28d9;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
 /* ---------------------------------------------------------------- */
-/* Structural utility classes — geometry that can't be expressed as  */
-/* a single Tailwind theme value (clip-path shape, corner brackets). */
+/* Structural utility classes — geometry/color combos that can't be  */
+/* expressed as a single Tailwind theme value.                       */
 /* ---------------------------------------------------------------- */
 
 /* Width axis + word-spacing for the display roles. Tailwind's fontSize
@@ -231,6 +394,12 @@
 }
 .clip-btn {
   clip-path: var(--clip-btn);
+}
+
+/* Two-stop gradient chrome surface (flat fill in light theme — see
+   the --chrome-surface redefinition above). Never used on the editor. */
+.chrome-surface {
+  background: var(--chrome-surface);
 }
 
 .corner-bracket {
@@ -265,8 +434,53 @@
   border-right: 1px solid var(--accent);
 }
 
-/* Low HP and expiring timers no longer change color (--warn is gone) —
-   they pulse opacity instead, at --dur-pulse. Low HP additionally
+/* ---------------------------------------------------------------- */
+/* Boss frame — ornamental treatment (DESIGN.md v2 §5). Fantasy, not  */
+/* military: a heavier border (the one place a chrome border exceeds */
+/* 1px), a glow (none in light theme, via --glow-accent), and four    */
+/* small gold corner flourishes rendered by BossFlourish.tsx.         */
+/* ---------------------------------------------------------------- */
+.boss-frame {
+  border-width: 3px;
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.boss-flourish {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.boss-flourish--tl {
+  top: -5px;
+  left: -5px;
+}
+.boss-flourish--tr {
+  top: -5px;
+  right: -5px;
+}
+.boss-flourish--bl {
+  bottom: -5px;
+  left: -5px;
+}
+.boss-flourish--br {
+  bottom: -5px;
+  right: -5px;
+}
+
+.boss-nameplate {
+  position: absolute;
+  top: -13px;
+  left: 24px;
+  background: var(--gold);
+  color: var(--void);
+}
+
+/* Low HP and expiring timers don't change color to a third semantic
+   hue — they pulse opacity instead, at --dur-pulse. Low HP additionally
    turns the HP number --fail; that's applied where the number renders,
    not here. */
 @keyframes pulse-opacity {
@@ -282,10 +496,104 @@
   animation: pulse-opacity var(--dur-pulse) ease-in-out infinite;
 }
 
+/* A gold glow pulse for loot/reward moments — opacity only. */
+@keyframes loot-pulse {
+  0%,
+  100% {
+    box-shadow: var(--glow-gold);
+  }
+  50% {
+    box-shadow: none;
+  }
+}
+.loot-glow {
+  box-shadow: var(--glow-gold);
+}
+.loot-pulse {
+  animation: loot-pulse 1600ms ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------- */
+/* Zone B — fight screen. Reactive-only motion: these all fire in    */
+/* response to a Run result, never ambiently, except .monster-breathe */
+/* which is the one explicit exception DESIGN.md §6 carves out.      */
+/* ---------------------------------------------------------------- */
+
+/* Monster idle breathing loop — 4s, ±2px translate. The only ambient
+   animation allowed anywhere in Zone B. */
+@keyframes monster-breathe {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+.monster-breathe {
+  animation: monster-breathe 4s ease-in-out infinite;
+}
+
+/* Single accent flash across the monster frame on a hit. Opacity
+   only — border color/width are static, not part of the animation. */
+@keyframes hit-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.monster-hit-flash {
+  animation: hit-flash var(--dur-slow) var(--ease-out) 1;
+  border: 2px solid var(--accent);
+}
+
+/* Screen-edge vignette pulse on a failing test — opacity only, no
+   screen shake anywhere. */
+@keyframes vignette-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.vignette-pulse {
+  animation: vignette-pulse var(--dur-slow) var(--ease-out) 1;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(var(--fail-rgb), 0.35) 100%);
+}
+
+/* Defeat overlay scrim — a flat void fill with alpha, not a new hex. */
+.overlay-scrim {
+  background-color: rgba(var(--void-rgb), 0.92);
+}
+
+/* CodeMirror damage-line decoration — failing line at 12% --fail,
+   set by lib/editor/damageLineExtension.ts. Never a glow, never near
+   the editor otherwise — the editor stays flat and still in every
+   theme. */
+.cm-damage-line {
+  background-color: rgba(var(--fail-rgb), 0.12);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* Breathing → static, not a frozen mid-keyframe offset. */
+  .monster-breathe {
+    animation: none;
+    transform: none;
+  }
+  /* A pulsing glow → a fixed, permanently-on glow instead of motion. */
+  .loot-pulse {
+    animation: none;
+    box-shadow: var(--glow-gold);
   }
 }

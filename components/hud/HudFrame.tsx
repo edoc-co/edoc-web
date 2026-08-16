@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface HudFrameProps {
   children: ReactNode;
@@ -15,13 +16,20 @@ interface HudFrameProps {
  * divider, with the content slot below. This is the "loud chrome"
  * DESIGN.md §1 talks about — the frame carries energy so the
  * workspace inside it (editor, etc.) can stay still.
+ *
+ * The header bar is a two-stop chrome-surface gradient (flat fill in
+ * light theme) — DESIGN.md v2's "gradients are allowed on chrome,
+ * never the editor" rule, applied here.
  */
 export default function HudFrame({ children, brand, rail, grain = false }: HudFrameProps) {
   return (
     <div className="relative flex min-h-full flex-col bg-void">
-      <header className="flex h-12 items-center justify-between px-6">
+      <header className="chrome-surface flex h-12 items-center justify-between px-6">
         <div>{brand}</div>
-        <div>{rail}</div>
+        <div className="flex items-center gap-4">
+          {rail}
+          <ThemeSwitcher />
+        </div>
       </header>
       <div aria-hidden className="h-px w-full bg-line" />
       <div className="relative flex-1">

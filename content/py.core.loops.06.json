@@ -1,0 +1,89 @@
+{
+  "id": "py.core.loops.06",
+  "language": "python",
+  "module": "py.core",
+  "difficulty": "standard",
+  "conceptTags": ["nested-loop", "break", "for-loop"],
+  "brief": "Write `first_pair_sum(nums, target)` that returns the first pair of indices (i, j), with i < j, where nums[i] + nums[j] == target. Return None if no pair exists.",
+  "starterCode": "def first_pair_sum(nums, target):\n    # your code here\n    return None",
+  "solutionCode": "def first_pair_sum(nums, target):\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return (i, j)\n    return None",
+  "estimatedMinutes": 8,
+  "monster": {
+    "id": "nest-hydra",
+    "name": "The Nest Hydra",
+    "hp": 120,
+    "sprite": "nest_hydra",
+    "attacks": [
+      {
+        "id": "coil-twice",
+        "damage": 20,
+        "trigger": "test-fail",
+        "message": "The Nest Hydra's inner head strikes — your inner loop starts in the wrong place."
+      },
+      {
+        "id": "double-bite",
+        "damage": 30,
+        "trigger": "runtime-error",
+        "message": "Both heads bite — an index ran past the end of the list."
+      },
+      {
+        "id": "stampede",
+        "damage": 40,
+        "trigger": "timeout",
+        "message": "The Hydra tramples you. Somewhere, a loop never breaks."
+      }
+    ]
+  },
+  "tests": [
+    {
+      "id": "t1",
+      "label": "Finds a pair in [2, 7, 11, 15] for target 9",
+      "hidden": false,
+      "damage": 40,
+      "conceptTags": ["for-loop"]
+    },
+    {
+      "id": "t2",
+      "label": "Never pairs an index with itself",
+      "hidden": false,
+      "damage": 30,
+      "conceptTags": ["nested-loop"]
+    },
+    {
+      "id": "t3",
+      "label": "Stops searching once a pair is found",
+      "hidden": true,
+      "damage": 20,
+      "conceptTags": ["break"]
+    },
+    {
+      "id": "t4",
+      "label": "Handles an empty list",
+      "hidden": true,
+      "damage": 30,
+      "conceptTags": ["nested-loop"]
+    }
+  ],
+  "hintCards": [
+    {
+      "id": "h1",
+      "title": "Nested loop indices",
+      "body": "The inner loop should start at i + 1, not 0 — otherwise you compare an element with itself or re-check pairs you already tried.",
+      "conceptTags": ["nested-loop"],
+      "cost": 0
+    },
+    {
+      "id": "h2",
+      "title": "Breaking out early",
+      "body": "Once you find a match, return immediately — no need to keep looping.",
+      "skeleton": "for i in range(len(nums)):\n    for j in range(___, len(nums)):\n        if ___:\n            return ___",
+      "conceptTags": ["break", "for-loop"],
+      "cost": 1
+    }
+  ],
+  "failureMap": [
+    { "match": { "testId": "t2" }, "concept": "nested-loop", "lessonCardId": "h1", "rematchVariant": "nums=[3, 3, 4, 5], target=6" },
+    { "match": { "errorType": "IndexError" }, "concept": "nested-loop", "lessonCardId": "h1" },
+    { "match": {}, "concept": "for-loop", "lessonCardId": "h2" }
+  ]
+}

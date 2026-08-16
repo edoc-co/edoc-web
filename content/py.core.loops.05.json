@@ -1,0 +1,76 @@
+{
+  "id": "py.core.loops.05",
+  "language": "python",
+  "module": "py.core",
+  "difficulty": "intro",
+  "conceptTags": ["while-loop", "accumulator", "off-by-one"],
+  "brief": "Write `count_down(n)` that returns a list counting down from n to 1, inclusive, using a while loop.",
+  "starterCode": "def count_down(n):\n    result = []\n    # your code here\n    return result",
+  "solutionCode": "def count_down(n):\n    result = []\n    i = n\n    while i > 0:\n        result.append(i)\n        i -= 1\n    return result",
+  "estimatedMinutes": 5,
+  "monster": {
+    "id": "while-wraith",
+    "name": "The While Wraith",
+    "hp": 90,
+    "sprite": "while_wraith",
+    "attacks": [
+      {
+        "id": "stall",
+        "damage": 20,
+        "trigger": "test-fail",
+        "message": "The While Wraith stalls your clock — the loop condition never flips."
+      },
+      {
+        "id": "freeze",
+        "damage": 40,
+        "trigger": "timeout",
+        "message": "Frozen solid. Your while loop never ends."
+      }
+    ]
+  },
+  "tests": [
+    {
+      "id": "t1",
+      "label": "count_down(3) is [3, 2, 1]",
+      "hidden": false,
+      "damage": 40,
+      "conceptTags": ["while-loop"]
+    },
+    {
+      "id": "t2",
+      "label": "Handles n = 1",
+      "hidden": false,
+      "damage": 20,
+      "conceptTags": ["off-by-one"]
+    },
+    {
+      "id": "t3",
+      "label": "Returns an empty list when n = 0",
+      "hidden": true,
+      "damage": 30,
+      "conceptTags": ["accumulator"]
+    }
+  ],
+  "hintCards": [
+    {
+      "id": "h1",
+      "title": "While loop condition",
+      "body": "The loop keeps running while its condition is true. To count down to 1, the condition should be `i > 0`, not `i >= 0`.",
+      "conceptTags": ["while-loop"],
+      "cost": 0
+    },
+    {
+      "id": "h2",
+      "title": "Accumulator pattern, again",
+      "body": "Start with an empty list, append inside the loop, then decrement.",
+      "skeleton": "result = []\ni = ___\nwhile ___:\n    result.append(___)\n    i -= 1",
+      "conceptTags": ["accumulator"],
+      "cost": 1
+    }
+  ],
+  "failureMap": [
+    { "match": { "testId": "t2" }, "concept": "off-by-one", "lessonCardId": "h1", "rematchVariant": "n=1 boundary retry" },
+    { "match": { "errorType": "TypeError" }, "concept": "accumulator", "lessonCardId": "h2" },
+    { "match": {}, "concept": "while-loop", "lessonCardId": "h1" }
+  ]
+}
