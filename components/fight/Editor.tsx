@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import CodeMirror, { type EditorView } from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { pythonEditorTheme } from '@/lib/editor/pythonTheme';
@@ -13,6 +13,11 @@ interface EditorProps {
   damageLine: number | null;
 }
 
+export interface EditorHandle {
+  /** Inserts text at the current cursor position and refocuses the editor — used by the hint deck's "swipe up" (Zone C). */
+  insertAtCursor: (text: string) => void;
+}
+
 /**
  * DESIGN.md §7 Zone B: "The calmest surface in the product... no
  * ambient motion... nothing animates while the editor has focus."
@@ -20,12 +25,29 @@ interface EditorProps {
  * decoration is a flat background, not a transition — and the
  * flash/vignette/HP-bar effects it sits beside all live outside it.
  */
-export default function Editor({ value, onChange, damageLine }: EditorProps) {
+const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ value, onChange, damageLine }, ref) {
   const viewRef = useRef<EditorView | null>(null);
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setDamageLine.of(damageLine) });
   }, [damageLine]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      insertAtCursor: (text: string) => {
+        const view = viewRef.current;
+        if (!view) return;
+        const pos = view.state.selection.main.head;
+        view.dispatch({
+          changes: { from: pos, insert: text },
+          selection: { anchor: pos + text.length },
+        });
+        view.focus();
+      },
+    }),
+    [],
+  );
 
   return (
     <CodeMirror
@@ -44,4 +66,6 @@ export default function Editor({ value, onChange, damageLine }: EditorProps) {
       }}
     />
   );
-}
+});
+
+export default Editor;

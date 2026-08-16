@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { HudFrame, Button, Panel, Label, Telemetry } from '@/components/hud';
-import Editor from './Editor';
+import { useCallback, useRef, useState } from 'react';
+import { HudFrame, Button, Panel, Telemetry } from '@/components/hud';
+import Editor, { type EditorHandle } from './Editor';
 import MonsterFrame from './MonsterFrame';
 import PlayerHud from './PlayerHud';
 import TestOutputPanel from './TestOutputPanel';
+import HintCardDeck from './HintCardDeck';
 import DefeatOverlay from './DefeatOverlay';
 import VictoryOverlay from './VictoryOverlay';
 import DevOutcomeControls from './DevOutcomeControls';
@@ -53,6 +54,12 @@ export default function FightScreen({ encounter }: FightScreenProps) {
   const [failingLine, setFailingLine] = useState<number | null>(null);
   const [attackMessage, setAttackMessage] = useState<string | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const editorRef = useRef<EditorHandle>(null);
+  // Saved hints ("backpack") — persists across encounters in this
+  // session; the player card (Part 5) is the natural place this
+  // eventually surfaces.
+  const [backpack, setBackpack] = useState<HintCard[]>([]);
+  void backpack;
 
   // Resets all per-encounter state whenever the encounter identity
   // actually changes — React's own recommended pattern for "reset
@@ -129,6 +136,20 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     setTimeout(() => setRunning(false), totalMs + 50);
   }, [encounter, code, applyDamage]);
 
+  // Zone C — left discards, right saves to the backpack, up inserts
+  // the card's skeleton at the editor's cursor. Never a working
+  // solution: skeletons are authored with blanks (validate:content
+  // enforces this), so this only ever hands the player scaffolding.
+  const handleDiscardHint = useCallback((_card: HintCard) => {
+    // No further bookkeeping yet — a discarded hint just goes away.
+  }, []);
+  const handleSaveHint = useCallback((card: HintCard) => {
+    setBackpack((prev) => [...prev, card]);
+  }, []);
+  const handleInsertHint = useCallback((card: HintCard) => {
+    if (card.skeleton) editorRef.current?.insertAtCursor(card.skeleton);
+  }, []);
+
   const handleRematch = useCallback(() => {
     resetFight(encounter);
     setLastResult(null);
@@ -184,9 +205,9 @@ export default function FightScreen({ encounter }: FightScreenProps) {
 
           <div className="grid min-h-0 grid-cols-1 gap-4 md:flex-1 md:grid-cols-[72fr_28fr]">
             <Panel padding="none" className="min-h-[420px] md:h-full">
-              <Editor value={code} onChange={setCode} damageLine={failingLine} />
+              <Editor ref={editorRef} value={code} onChange={setCode} damageLine={failingLine} />
             </Panel>
-            <div className="flex flex-col gap-4">
+            <div className="flex min-h-0 flex-col gap-4">
               <PlayerHud hp={playerHp} maxHp={playerMaxHp} />
               {/* Run is always visible and enabled unless a run is in
                   flight (DESIGN.md v2 §9) — clearing or losing doesn't
@@ -194,14 +215,17 @@ export default function FightScreen({ encounter }: FightScreenProps) {
               <Button onClick={handleRun} disabled={running}>
                 {running ? 'Running…' : 'Run code'}
               </Button>
-              {/* Part 3 fills this with the hint card deck; reserved
-                  now so that landing doesn't reshuffle this layout. */}
-              <div className="flex min-h-0 flex-1 flex-col gap-2">
-                <Label>Hint deck</Label>
-                <div className="clip-panel flex flex-1 items-center justify-center border border-line bg-panel p-4">
-                  <Telemetry>No hints drawn yet</Telemetry>
-                </div>
-              </div>
+              {/* Zone C — keyed on encounter.id: hint card ids repeat
+                  across encounters (h1/h2), so without a key the deck's
+                  internal "already swiped" state would wrongly carry
+                  over to the next fight instead of resetting. */}
+              <HintCardDeck
+                key={encounter.id}
+                cards={encounter.hintCards}
+                onDiscard={handleDiscardHint}
+                onSave={handleSaveHint}
+                onInsert={handleInsertHint}
+              />
             </div>
           </div>
 
