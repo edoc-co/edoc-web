@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, isValidElement, type ReactNode } from 'react';
+import { Children, isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ENTRANCE_STAGGER_MS, ENTRANCE_STAGGER_CAP, DUR, EASE_OUT } from '@/lib/motion/tokens';
 
@@ -17,10 +17,26 @@ interface EntranceProps {
  * 0→1. Capped at ~6 staggered items — anything beyond that arrives
  * together with the 6th, so a long list doesn't take visibly longer
  * to finish appearing than a short one.
+ *
+ * `animate` (not `initial`) is gated behind a post-mount `mounted`
+ * flag: Framer Motion renders using `initial`'s values for SSR, and
+ * this component's first client render runs *before* the mount effect
+ * flips `mounted` — so on that first render, `animate` still equals
+ * `initial` and nothing has moved yet, matching the server's output
+ * exactly. Only after mount does `animate` change, which is what
+ * actually plays the transition — as a genuine post-hydration update,
+ * not something React's hydration check ever has to compare against
+ * the server. Gating `initial` instead (the more obvious-looking fix)
+ * doesn't work: the server would still render the *other* value.
  */
 export default function Entrance({ children, className, itemClassName }: EntranceProps) {
   const reducedMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const items = Children.toArray(children);
+  const restState = { opacity: 0, y: 8 };
+  const enteredState = { opacity: 1, y: 0 };
 
   return (
     <div className={className}>
@@ -32,8 +48,8 @@ export default function Entrance({ children, className, itemClassName }: Entranc
           <motion.div
             key={key}
             className={itemClassName}
-            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reducedMotion ? false : restState}
+            animate={reducedMotion || mounted ? enteredState : restState}
             transition={{ duration: DUR.slow, ease: EASE_OUT, delay }}
           >
             {child}
