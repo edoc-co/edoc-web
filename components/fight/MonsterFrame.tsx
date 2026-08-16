@@ -1,6 +1,7 @@
 'use client';
 
 import { Panel } from '@/components/hud';
+import { Monster, type MonsterState } from '@/components/motion';
 import BossFlourish from './BossFlourish';
 import HpBar from './HpBar';
 
@@ -8,6 +9,7 @@ interface MonsterFrameProps {
   name: string;
   hp: number;
   maxHp: number;
+  state: MonsterState;
   /** Bump to trigger a fresh single accent flash (e.g. Date.now() or a counter). */
   hitFlashKey: number;
   attackMessage: string | null;
@@ -20,16 +22,21 @@ interface MonsterFrameProps {
  * --accent (never gold — see tokens.css). The frame's glow is off in
  * light theme automatically (--glow-accent resolves to `none` there).
  *
- * ~180px tall total: sprite (~140px) is the dominant element, name/HP
- * sit beside it filling the remaining width, not below it. This is a
- * *showcase*-register surface even though it lives on the fight
- * screen (§2 boundary case).
+ * ~180px tall total: the <Monster> sprite (~140px) is the dominant
+ * element, name/HP sit beside it filling the remaining width, not
+ * below it. This is a *showcase*-register surface even though it
+ * lives on the fight screen (§2 boundary case) — it's allowed to be
+ * ornamental and (in dark themes) glowing; the editor directly below
+ * it must not be.
+ *
+ * `data-boss-frame` is a plain query hook for lib/motion/killCeremony
+ * (Part 4) — no ref plumbing needed through this component.
  *
  * The "BOSS" badge gets its own row above the frame, in normal flow —
  * not absolutely positioned overlapping the border. The overlap
  * approach clipped the text at small sizes; plain padding doesn't.
  */
-export default function MonsterFrame({ name, hp, maxHp, hitFlashKey, attackMessage }: MonsterFrameProps) {
+export default function MonsterFrame({ name, hp, maxHp, state, hitFlashKey, attackMessage }: MonsterFrameProps) {
   const low = hp > 0 && hp / maxHp < 0.25;
 
   return (
@@ -40,17 +47,12 @@ export default function MonsterFrame({ name, hp, maxHp, hitFlashKey, attackMessa
 
       <div className="relative">
         <BossFlourish />
-        <Panel padding="card" className="boss-frame relative flex items-center gap-4 overflow-hidden">
+        <Panel data-boss-frame padding="card" className="boss-frame relative flex items-center gap-4 overflow-hidden">
           {hitFlashKey > 0 && (
             <span key={hitFlashKey} aria-hidden className="monster-hit-flash pointer-events-none absolute inset-0" />
           )}
 
-          <div
-            className="monster-breathe clip-btn flex h-[140px] w-[140px] shrink-0 items-center justify-center border border-line bg-raised"
-            aria-hidden
-          >
-            <span className="font-display text-5xl font-extrabold text-text-mid">{name.charAt(0)}</span>
-          </div>
+          <Monster state={state} spriteLabel={name.charAt(0)} className="h-[140px] w-[140px] shrink-0" />
 
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h1 className="text-boss min-w-0 truncate text-text-hi">{name}</h1>

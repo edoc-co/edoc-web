@@ -619,3 +619,13 @@ body[data-custom-cursor] .cm-editor,
 body[data-custom-cursor] .cm-editor * {
   cursor: auto;
 }
+
+/* ---------------------------------------------------------------- */
+/* Kill ceremony (§3, lib/motion/killCeremony.ts) reduced-motion       */
+/* substitute — "shake -> border flash" (§7 rule 4). The GSAP timeline */
+/* itself no-ops under reduced motion and applies this class instead. */
+/* ---------------------------------------------------------------- */
+.kill-flash-static {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}

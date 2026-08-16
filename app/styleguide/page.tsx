@@ -210,6 +210,7 @@ export default function StyleguidePage() {
               name="The Loop King"
               hp={340}
               maxHp={500}
+              state="idle"
               hitFlashKey={0}
               attackMessage={null}
             />

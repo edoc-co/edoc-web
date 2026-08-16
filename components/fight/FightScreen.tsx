@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { HudFrame, Button, Panel, Telemetry } from '@/components/hud';
 import Editor, { type EditorHandle } from './Editor';
 import MonsterFrame from './MonsterFrame';
@@ -10,11 +10,17 @@ import HintCardDeck from './HintCardDeck';
 import DefeatOverlay from './DefeatOverlay';
 import VictoryOverlay from './VictoryOverlay';
 import DevOutcomeControls from './DevOutcomeControls';
+import type { MonsterState } from '@/components/motion';
+import { runKillCeremony } from '@/lib/motion/killCeremony';
 import { runTests } from '@/lib/runtime/runTests';
 import { computeOutcome } from '@/lib/fight/engine';
 import { matchFailureRule } from '@/lib/fight/failureMap';
 import { useFightStore } from '@/lib/store/fightStore';
 import type { Encounter, RunResult, HintCard, FailureRule } from '@/lib/encounters/types';
+
+// How long the Monster holds a reactive 'hit'/'attack' pose before
+// settling back to 'idle' — a beat, not a lingering state.
+const MONSTER_REACTION_MS = 500;
 
 interface FightScreenProps {
   encounter: Encounter;
@@ -54,6 +60,12 @@ export default function FightScreen({ encounter }: FightScreenProps) {
   const [failingLine, setFailingLine] = useState<number | null>(null);
   const [attackMessage, setAttackMessage] = useState<string | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [monsterState, setMonsterState] = useState<MonsterState>('idle');
+  // Gates the victory overlay until the kill ceremony (§3: time
+  // dilation, frame shatter, screen shake, then the reveal) finishes —
+  // the artifact reveal is the ceremony's last beat, not a replacement
+  // for it.
+  const [ceremonyDone, setCeremonyDone] = useState(false);
   const editorRef = useRef<EditorHandle>(null);
   // Saved hints ("backpack") — persists across encounters in this
   // session; the player card (Part 5) is the natural place this
@@ -84,7 +96,37 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     setFailingLine(null);
     setAttackMessage(null);
     setLesson(null);
+    setMonsterState('idle');
+    setCeremonyDone(false);
   }
+
+  // On kill: §3's ceremony (time dilation, frame shatter, screen
+  // shake — the one place it's allowed) runs once, then the artifact
+  // reveal (VictoryOverlay) is gated open. Genuinely a side effect
+  // (DOM query + an imperative GSAP timeline), so an effect reacting
+  // to the store's `cleared` flag is the right tool here — this isn't
+  // the "derive state from a prop" case the render-time reset above
+  // is for.
+  useEffect(() => {
+    if (!cleared) {
+      setCeremonyDone(false);
+      setMonsterState((s) => (s === 'defeated' ? 'idle' : s));
+      return;
+    }
+    setMonsterState('defeated');
+    const frameEl = document.querySelector<HTMLElement>('[data-boss-frame]');
+    if (!frameEl) {
+      setCeremonyDone(true);
+      return;
+    }
+    let cancelled = false;
+    runKillCeremony(frameEl, () => {
+      if (!cancelled) setCeremonyDone(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cleared]);
 
   const handleRun = useCallback(async () => {
     setRunning(true);
@@ -110,12 +152,16 @@ export default function FightScreen({ encounter }: FightScreenProps) {
       setTimeout(() => {
         if (passed) {
           applyDamage(test.damage, 0);
+          setMonsterState('hit');
+          setTimeout(() => setMonsterState((s) => (s === 'hit' ? 'idle' : s)), MONSTER_REACTION_MS);
         } else if (!firstFailureHandled) {
           firstFailureHandled = true;
           const playerDamage = outcome.attack?.damage ?? 0;
           const { nextPlayerHp } = applyDamage(0, playerDamage);
           setVignetteKey((k) => k + 1);
           setAttackMessage(outcome.attack?.message ?? null);
+          setMonsterState('attack');
+          setTimeout(() => setMonsterState((s) => (s === 'attack' ? 'idle' : s)), MONSTER_REACTION_MS);
 
           if (nextPlayerHp <= 0) {
             const rule = matchFailureRule(encounter, {
@@ -199,6 +245,7 @@ export default function FightScreen({ encounter }: FightScreenProps) {
             name={encounter.monster.name}
             hp={monsterHp}
             maxHp={monsterMaxHp}
+            state={monsterState}
             hitFlashKey={flashKey}
             attackMessage={attackMessage}
           />
@@ -251,7 +298,7 @@ export default function FightScreen({ encounter }: FightScreenProps) {
         />
       )}
 
-      {cleared && !defeated && (
+      {cleared && !defeated && ceremonyDone && (
         <VictoryOverlay monsterName={encounter.monster.name} encounterId={encounter.id} onRematch={handleRematch} />
       )}
     </div>
