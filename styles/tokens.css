@@ -25,7 +25,7 @@
   /* Scale: size / weight-or-width / case / tracking, per role.
      -width is a font-stretch value on Archivo's wdth axis (62–125,
      see app/layout.tsx) — 100 is normal, >100 expanded, <100 condensed. */
-  --text-boss-size: clamp(48px, 6vw, 72px);
+  --text-boss-size: clamp(40px, 4vw, 56px); /* DESIGN.md v2 §5 — was 48–72px in v1 */
   --text-boss-weight: 800;
   --text-boss-width: 125%; /* expanded */
   --text-boss-tracking: -0.02em;
@@ -438,7 +438,10 @@
 /* Boss frame — ornamental treatment (DESIGN.md v2 §5). Fantasy, not  */
 /* military: a heavier border (the one place a chrome border exceeds */
 /* 1px), a glow (none in light theme, via --glow-accent), and four    */
-/* small gold corner flourishes rendered by BossFlourish.tsx.         */
+/* small corner flourishes rendered by BossFlourish.tsx. Always        */
+/* --accent, never gold — gold means "won," accent means "structure," */
+/* and the two are close in hue for some languages (Python especially) */
+/* so mixing them on one surface collapses the read (DESIGN.md v2 §4). */
 /* ---------------------------------------------------------------- */
 .boss-frame {
   border-width: 3px;
@@ -450,7 +453,7 @@
   position: absolute;
   width: 10px;
   height: 10px;
-  background: var(--gold);
+  background: var(--accent);
   transform: rotate(45deg);
   pointer-events: none;
 }
@@ -471,11 +474,14 @@
   right: -5px;
 }
 
+/* No clip-path here (deliberately) — the badge is too small for the
+   8px clip-btn diagonal without it eating into the "BOSS" text itself.
+   A flat rectangle still reads as a plated nameplate at this size. */
 .boss-nameplate {
   position: absolute;
-  top: -13px;
+  top: -11px;
   left: 24px;
-  background: var(--gold);
+  background: var(--accent);
   color: var(--void);
 }
 

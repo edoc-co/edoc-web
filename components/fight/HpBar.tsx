@@ -18,11 +18,11 @@ interface HpBarProps {
 }
 
 /**
- * DESIGN.md v2 §7 Zone B: "6px tall track, hard edges... Damage drains
- * in 300ms with a lighter 'ghost' segment trailing behind for 500ms."
- * Both segments animate `transform: scaleX()`, never `width`, per the
- * transform/opacity-only motion rule. A soft glow above 50% HP; below
- * 20% the bar pulses instead of changing color (no --warn).
+ * DESIGN.md v2 §9 Zone B: "ghost-trail drain, pulses at 1s with the
+ * number in --fail below 25%." Both segments animate `transform:
+ * scaleX()`, never `width`, per the transform/opacity-only motion
+ * rule. A soft glow above 50% HP; below 25% the bar pulses instead of
+ * changing color (no --warn).
  *
  * The ghost is self-contained here: when `value` drops, it snaps to
  * the old (higher) value instantly, then animates down to the new
@@ -49,7 +49,7 @@ export default function HpBar({ value, max, fillVar = '--accent', glowVar, class
 
   const ratio = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   const ghostRatio = max > 0 ? Math.max(0, Math.min(1, ghost / max)) : 0;
-  const low = ratio > 0 && ratio < 0.2;
+  const low = ratio > 0 && ratio < 0.25;
   const glowing = glowVar && ratio > 0.5;
 
   return (

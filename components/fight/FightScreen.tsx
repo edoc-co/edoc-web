@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { HudFrame, Button, Panel, Telemetry } from '@/components/hud';
 import Editor from './Editor';
 import MonsterFrame from './MonsterFrame';
 import PlayerHud from './PlayerHud';
 import TestOutputPanel from './TestOutputPanel';
 import DefeatOverlay from './DefeatOverlay';
+import VictoryOverlay from './VictoryOverlay';
 import DevOutcomeControls from './DevOutcomeControls';
 import { runTests } from '@/lib/runtime/runTests';
 import { computeOutcome } from '@/lib/fight/engine';
@@ -23,6 +24,11 @@ interface Lesson {
   card: HintCard | null;
 }
 
+// How far apart each test's row-reveal / HP-consequence lands, in ms.
+// Matches TestOutputPanel's own per-row `transitionDelay` so the bar
+// visibly drains in step with each row resolving, not all at once.
+const STEP_MS = 100;
+
 export default function FightScreen({ encounter }: FightScreenProps) {
   // Zustand owns HP; everything else here is per-run UI state that
   // doesn't need to be global (DESIGN.md's "game state in the store,
@@ -38,12 +44,6 @@ export default function FightScreen({ encounter }: FightScreenProps) {
   const applyDamage = useFightStore((s) => s.applyDamage);
   const resetFight = useFightStore((s) => s.reset);
 
-  const initialized = useRef(false);
-  if (!initialized.current) {
-    startFight(encounter);
-    initialized.current = true;
-  }
-
   const [code, setCode] = useState(encounter.starterCode);
   const [running, setRunning] = useState(false);
   const [lastResult, setLastResult] = useState<RunResult | null>(null);
@@ -53,6 +53,31 @@ export default function FightScreen({ encounter }: FightScreenProps) {
   const [failingLine, setFailingLine] = useState<number | null>(null);
   const [attackMessage, setAttackMessage] = useState<string | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
+
+  // Resets all per-encounter state whenever the encounter identity
+  // actually changes — React's own recommended pattern for "reset
+  // state when a prop changes" (react.dev), done during render so
+  // there's no stale-then-corrected flash. Seeded with `null` (never a
+  // real id) so this also fires on the very first render, which is
+  // what populates the store initially. The bug this replaces: a
+  // one-shot `useRef` guard only ever initialized once per component
+  // *instance*, so switching encounters without a full page reload
+  // left the previous encounter's HP, results, and cleared/defeated
+  // flags on screen — stale HP, tests reading "passed" for a fight
+  // that never ran, a permanently disabled "Cleared" button.
+  const [initializedFor, setInitializedFor] = useState<string | null>(null);
+  if (initializedFor !== encounter.id) {
+    setInitializedFor(encounter.id);
+    startFight(encounter);
+    setCode(encounter.starterCode);
+    setLastResult(null);
+    setRunKey(0);
+    setFlashKey(0);
+    setVignetteKey(0);
+    setFailingLine(null);
+    setAttackMessage(null);
+    setLesson(null);
+  }
 
   const handleRun = useCallback(async () => {
     setRunning(true);
@@ -65,27 +90,43 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     setRunKey((k) => k + 1);
     setFailingLine(outcome.failingLine);
 
-    const { nextPlayerHp } = applyDamage(outcome.monsterDamage, outcome.playerDamage);
+    // Progressive reveal: each test's HP consequence lands at the same
+    // stagger TestOutputPanel uses to reveal its row, so the bar
+    // visibly drains per passing test rather than jumping straight to
+    // the run's total. Only the first failing test triggers the
+    // monster's counter-attack (one hit per run, same as before).
+    let firstFailureHandled = false;
+    encounter.tests.forEach((test, i) => {
+      const testResult = result.results.find((r) => r.testId === test.id);
+      const passed = testResult?.passed ?? false;
 
+      setTimeout(() => {
+        if (passed) {
+          applyDamage(test.damage, 0);
+        } else if (!firstFailureHandled) {
+          firstFailureHandled = true;
+          const playerDamage = outcome.attack?.damage ?? 0;
+          const { nextPlayerHp } = applyDamage(0, playerDamage);
+          setVignetteKey((k) => k + 1);
+          setAttackMessage(outcome.attack?.message ?? null);
+
+          if (nextPlayerHp <= 0) {
+            const rule = matchFailureRule(encounter, {
+              failingTestId: outcome.failingTestId,
+              stderr: result.stderr,
+            });
+            const card = encounter.hintCards.find((h) => h.id === rule.lessonCardId) ?? null;
+            setLesson({ rule, card });
+          }
+        }
+      }, i * STEP_MS);
+    });
+
+    const totalMs = encounter.tests.length * STEP_MS;
     if (outcome.monsterDamage > 0) {
-      setFlashKey((k) => k + 1);
+      setTimeout(() => setFlashKey((k) => k + 1), totalMs);
     }
-
-    if (outcome.playerDamage > 0) {
-      setVignetteKey((k) => k + 1);
-      setAttackMessage(outcome.attack?.message ?? null);
-
-      if (nextPlayerHp <= 0) {
-        const rule = matchFailureRule(encounter, {
-          failingTestId: outcome.failingTestId,
-          stderr: result.stderr,
-        });
-        const card = encounter.hintCards.find((h) => h.id === rule.lessonCardId) ?? null;
-        setLesson({ rule, card });
-      }
-    }
-
-    setRunning(false);
+    setTimeout(() => setRunning(false), totalMs + 50);
   }, [encounter, code, applyDamage]);
 
   const handleRematch = useCallback(() => {
@@ -109,7 +150,7 @@ export default function FightScreen({ encounter }: FightScreenProps) {
           </Telemetry>
         }
       >
-        <main className="relative mx-auto flex max-w-4xl flex-col gap-6 px-6 py-8">
+        <main className="relative mx-auto flex max-w-5xl flex-col gap-4 px-6 py-4">
           {vignetteKey > 0 && (
             <span
               key={vignetteKey}
@@ -126,23 +167,27 @@ export default function FightScreen({ encounter }: FightScreenProps) {
             attackMessage={attackMessage}
           />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_220px]">
-            <Panel padding="none">
+          <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-[1fr_320px]">
+            <Panel padding="none" className="h-full">
               <Editor value={code} onChange={setCode} damageLine={failingLine} />
             </Panel>
             <div className="flex flex-col gap-4">
               <PlayerHud hp={playerHp} maxHp={playerMaxHp} />
-              <Button onClick={handleRun} disabled={running || defeated || cleared}>
-                {running ? 'Running…' : cleared ? 'Cleared' : 'Run code'}
+              {/* Run is always visible and enabled unless a run is in
+                  flight (DESIGN.md v2 §9) — clearing or losing doesn't
+                  lock it; the overlays are what gate progress, not this. */}
+              <Button onClick={handleRun} disabled={running}>
+                {running ? 'Running…' : 'Run code'}
               </Button>
+              <TestOutputPanel tests={encounter.tests} results={lastResult?.results ?? null} revealKey={runKey} />
             </div>
           </div>
-
-          <TestOutputPanel tests={encounter.tests} results={lastResult?.results ?? null} revealKey={runKey} />
-
-          <DevOutcomeControls />
         </main>
       </HudFrame>
+
+      <div className="fixed bottom-4 left-4 z-30">
+        <DevOutcomeControls />
+      </div>
 
       {defeated && lesson && (
         <DefeatOverlay
@@ -151,6 +196,10 @@ export default function FightScreen({ encounter }: FightScreenProps) {
           rematchVariant={lesson.rule.rematchVariant}
           onRematch={handleRematch}
         />
+      )}
+
+      {cleared && !defeated && (
+        <VictoryOverlay monsterName={encounter.monster.name} encounterId={encounter.id} onRematch={handleRematch} />
       )}
     </div>
   );

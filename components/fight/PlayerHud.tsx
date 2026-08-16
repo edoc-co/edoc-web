@@ -9,18 +9,18 @@ interface PlayerHudProps {
 }
 
 /**
- * The player's own HP, kept visually distinct from the monster's:
- * neutral --text-hi fill rather than --accent, so the accent budget
- * (DESIGN.md §3) stays spent on the monster's bar, the one the whole
- * screen is meant to read first.
+ * The player's own HP. Uses --accent with a glow, same as the boss's
+ * bar — DESIGN.md v2 doesn't carve out a neutral treatment for this
+ * one, and a plain --text-hi fill read as "white," which the v2 pass
+ * flagged directly.
  */
 export default function PlayerHud({ hp, maxHp }: PlayerHudProps) {
-  const low = hp > 0 && hp / maxHp < 0.2;
+  const low = hp > 0 && hp / maxHp < 0.25;
 
   return (
     <Panel padding="card" className="flex flex-col gap-2">
       <Label>You</Label>
-      <HpBar value={hp} max={maxHp} fillVar="--text-hi" />
+      <HpBar value={hp} max={maxHp} glowVar="--glow-accent" />
       {/* Not <Telemetry> here — it hardcodes text-text-lo, which would
           fight with the low-HP text-fail override at equal Tailwind
           utility specificity. Same visual role (font-hud, 12px, UPPER,
