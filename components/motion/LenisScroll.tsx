@@ -20,6 +20,9 @@ export default function LenisScroll() {
 
     import('lenis').then(({ default: Lenis }) => {
       if (cancelled) return;
+      // 1.1s is Lenis's own smoothing-duration tuning parameter, not
+      // one of DESIGN.md's UI durations (§7) — a different axis
+      // (scroll momentum feel) with its own reasonable default.
       lenis = new Lenis({ duration: 1.1, smoothWheel: true });
       const raf = (time: number) => {
         lenis?.raf(time);

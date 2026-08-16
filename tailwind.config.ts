@@ -116,14 +116,17 @@ const config: Config = {
       // default 4px-based numeric scale — p-1..p-16 — so it is not
       // re-declared here. See the comment in styles/tokens.css.
       transitionDuration: {
+        instant: 'var(--dur-instant)',
         fast: 'var(--dur-fast)',
         base: 'var(--dur-base)',
         slow: 'var(--dur-slow)',
+        scene: 'var(--dur-scene)',
         ghost: 'var(--dur-ghost)', // HP bar ghost segment trailing behind the drain
       },
       transitionTimingFunction: {
         out: 'var(--ease-out)',
         snap: 'var(--ease-snap)',
+        scene: 'var(--ease-scene)',
       },
       borderColor: {
         DEFAULT: 'var(--line)',

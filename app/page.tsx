@@ -35,7 +35,7 @@ export default function LandingPage() {
         brand={
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
         }
-        rail={<Telemetry>Guided learning · arcade combat</Telemetry>}
+        rail={<Telemetry className="hidden sm:inline">Guided learning · arcade combat</Telemetry>}
       >
         <main className="mx-auto flex max-w-5xl flex-col gap-32 px-8 py-20">
           <section className="flex flex-col gap-10">

@@ -23,7 +23,7 @@ export default function ProfilePage() {
         brand={
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
         }
-        rail={<Telemetry>Player card</Telemetry>}
+        rail={<Telemetry className="hidden sm:inline">Player card</Telemetry>}
       >
         <main className="mx-auto flex max-w-4xl flex-col gap-10 px-8 py-12">
           <Entrance className="contents">

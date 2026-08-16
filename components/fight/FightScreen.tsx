@@ -217,7 +217,11 @@ export default function FightScreen({ encounter }: FightScreenProps) {
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
         }
         rail={
-          <Telemetry>
+          // Hidden below sm — at 390px this plus the theme switcher
+          // doesn't fit in one header row (found via an actual
+          // scrollWidth check, not assumed); the switcher matters more
+          // at that width, the encounter id doesn't.
+          <Telemetry className="hidden sm:inline">
             SYS://{encounter.module.toUpperCase()}/{encounter.id}
           </Telemetry>
         }

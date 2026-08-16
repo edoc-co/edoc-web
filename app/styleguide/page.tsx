@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { HudFrame, Panel, Button, Pill, Label, Telemetry, CornerBrackets } from '@/components/hud';
 import MonsterFrame from '@/components/fight/MonsterFrame';
 import HpBar from '@/components/fight/HpBar';
+import {
+  Magnetic,
+  TextReveal,
+  NumberTransition,
+  LoadingReveal,
+  Entrance,
+  CustomCursor,
+  Monster,
+  type MonsterState,
+} from '@/components/motion';
 
 /** "rgb(r, g, b)" / "rgba(r, g, b, a)" -> "#RRGGBB" (+ alpha byte if < 1). */
 function colorToHex(resolved: string): string {
@@ -51,6 +61,10 @@ export default function StyleguidePage() {
   const [lang, setLang] = useState<'none' | 'python'>('none');
   const swatchRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [hexes, setHexes] = useState<Record<string, string>>({});
+  const [cursorOn, setCursorOn] = useState(false);
+  const [demoMonsterState, setDemoMonsterState] = useState<MonsterState>('idle');
+  const [statValue, setStatValue] = useState(148);
+  const [entranceKey, setEntranceKey] = useState(0);
 
   // Reads each swatch's actual computed color rather than assuming a
   // static hex, so themed tokens (accent, accent-dim, accent-text, and
@@ -283,10 +297,10 @@ export default function StyleguidePage() {
           </section>
 
           {/* Motion */}
-          <section className="flex flex-col gap-4 pb-12">
-            <Label>Motion</Label>
+          <section className="flex flex-col gap-4">
+            <Label>Motion (DESIGN.md v2 §7 durations)</Label>
             <div className="flex flex-wrap gap-4">
-              {(['fast', 'base', 'slow'] as const).map((d) => (
+              {(['instant', 'fast', 'base', 'slow', 'scene'] as const).map((d) => (
                 <div
                   key={d}
                   tabIndex={0}
@@ -295,6 +309,81 @@ export default function StyleguidePage() {
                   <Telemetry>{d}</Telemetry>
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Interaction primitives — showcase register only; none of
+              these run on the fight screen. */}
+          <section className="flex flex-col gap-6 pb-12">
+            <Label>Interaction primitives (§8, showcase register only)</Label>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Custom cursor (§8.1) — hover this panel, hides over the editor pane</Telemetry>
+              <div className="flex items-center gap-3">
+                <Button variant={cursorOn ? 'primary' : 'ghost'} onClick={() => setCursorOn((v) => !v)}>
+                  {cursorOn ? 'Cursor: on' : 'Cursor: off'}
+                </Button>
+                {cursorOn && <CustomCursor />}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Magnetic hover (§8.2) — up to 6px pull within a 40px radius</Telemetry>
+              <Magnetic className="w-fit">
+                <Button variant="ghost" data-cursor-interactive>
+                  Hover near me
+                </Button>
+              </Magnetic>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Text reveal (§8.5) — per-word mask, 30ms stagger</Telemetry>
+              <TextReveal key={entranceKey} as="h2" className="text-zone-title text-text-hi" text="BOSS DEFEATED" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Number transition (§8.7) — animates old→new over 360ms</Telemetry>
+              <div className="flex items-center gap-4">
+                <NumberTransition value={statValue} className="text-stat text-text-hi" />
+                <Button variant="ghost" onClick={() => setStatValue((v) => v + 37)}>
+                  +37
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Entrance choreography (§8.4) — 40ms stagger, capped at 6 items</Telemetry>
+              <Button variant="ghost" className="w-fit" onClick={() => setEntranceKey((k) => k + 1)}>
+                Replay entrance
+              </Button>
+              <Entrance key={entranceKey} className="flex flex-wrap gap-3">
+                {['t1', 't2', 't3', 't4', 't5'].map((id) => (
+                  <div key={id} className="clip-btn border border-line bg-raised px-4 py-2">
+                    <Telemetry>{id}</Telemetry>
+                  </div>
+                ))}
+              </Entrance>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>Loading as experience (§8.8) — no spinners, suppressed under 200ms</Telemetry>
+              <div className="h-40">
+                <LoadingReveal label="Assembling encounter" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Telemetry>&lt;Monster&gt; state machine (§13) — static fallback, no .riv asset yet</Telemetry>
+              <div className="flex items-center gap-4">
+                <Monster state={demoMonsterState} spriteLabel="M" className="h-20 w-20" />
+                <div className="flex flex-wrap gap-2">
+                  {(['idle', 'hit', 'attack', 'defeated'] as const).map((s) => (
+                    <Pill key={s} active={demoMonsterState === s} onClick={() => setDemoMonsterState(s)}>
+                      {s}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
         </main>

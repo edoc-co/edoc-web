@@ -46,7 +46,7 @@ export default function CoasterPage() {
         brand={
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
         }
-        rail={<Telemetry>Zone A — language coaster</Telemetry>}
+        rail={<Telemetry className="hidden sm:inline">Zone A — language coaster</Telemetry>}
       >
         <main className="flex flex-col gap-8 px-8 py-10">
           <div className="flex flex-col gap-3">
@@ -64,8 +64,13 @@ export default function CoasterPage() {
                 key={t}
                 type="button"
                 onClick={() => setGoalTrack((g) => (g === t ? null : t))}
+                // --cyan, not --accent: a track goal is exploratory/
+                // wayfinding chrome, not "the active language" —
+                // DESIGN.md v2 §4 reserves cyan for exactly this
+                // (coaster/social), keeping accent free for actual
+                // per-language structure.
                 className={`clip-btn border px-3 py-1 font-hud text-telemetry uppercase transition-colors duration-fast ease-out ${
-                  goalTrack === t ? 'border-accent text-accent' : 'border-line text-text-lo hover:text-text-mid'
+                  goalTrack === t ? 'border-cyan text-cyan' : 'border-line text-text-lo hover:text-text-mid'
                 }`}
               >
                 {t}
