@@ -603,3 +603,19 @@
     box-shadow: var(--glow-gold);
   }
 }
+
+/* ---------------------------------------------------------------- */
+/* Custom cursor (§8.1, components/motion/CustomCursor.tsx) — hides   */
+/* the native cursor everywhere it's mounted (showcase surfaces only) */
+/* except over the editor, where text selection must keep working    */
+/* exactly as normal. Reduced-motion and touch devices never set the  */
+/* attribute in the first place (CustomCursor.tsx itself no-ops), so  */
+/* no separate reduced-motion override is needed here.                */
+/* ---------------------------------------------------------------- */
+body[data-custom-cursor] {
+  cursor: none;
+}
+body[data-custom-cursor] .cm-editor,
+body[data-custom-cursor] .cm-editor * {
+  cursor: auto;
+}

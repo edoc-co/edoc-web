@@ -2,6 +2,7 @@
 
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { THEMES } from '@/lib/theme/constants';
+import { Pressable } from '@/components/motion';
 
 const LABELS: Record<string, string> = {
   default: 'Default',
@@ -21,7 +22,7 @@ export default function ThemeSwitcher() {
       {THEMES.map((t) => {
         const active = theme === t;
         return (
-          <button
+          <Pressable
             key={t}
             type="button"
             role="radio"
@@ -32,7 +33,7 @@ export default function ThemeSwitcher() {
             }`}
           >
             {LABELS[t]}
-          </button>
+          </Pressable>
         );
       })}
     </div>
