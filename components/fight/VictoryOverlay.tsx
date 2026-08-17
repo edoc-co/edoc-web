@@ -1,6 +1,8 @@
 'use client';
 
 import { Panel, Button, Label } from '@/components/hud';
+import { useWorld } from '@/lib/world/WorldProvider';
+import { FICTION } from '@/lib/world/fiction';
 
 interface VictoryOverlayProps {
   monsterName: string;
@@ -18,6 +20,7 @@ interface VictoryOverlayProps {
  * the motion stack; this is the functional version.
  */
 export default function VictoryOverlay({ monsterName, encounterId, onRematch }: VictoryOverlayProps) {
+  const { world } = useWorld();
   return (
     <div className="overlay-scrim fixed inset-0 z-50 flex items-center justify-center px-6">
       {/* Not `active` — Panel's active glow is --glow-accent via inline
@@ -25,7 +28,9 @@ export default function VictoryOverlay({ monsterName, encounterId, onRematch }: 
           specificity. This is a won moment: gold only, no accent. */}
       <Panel className="loot-glow flex w-full max-w-md flex-col gap-4 border-gold">
         <Label>Encounter cleared</Label>
-        <h2 className="text-zone-title text-gold">{monsterName} defeated</h2>
+        <h2 className="text-zone-title text-gold">
+          {monsterName} {FICTION.clearedLabel[world]}
+        </h2>
         <p className="text-body text-text-mid">
           Every test passed. <span className="font-hud text-telemetry uppercase text-text-lo">{encounterId}</span>
         </p>

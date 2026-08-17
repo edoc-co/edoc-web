@@ -94,6 +94,10 @@
   --text-boss-tracking: -0.02em;
   --text-boss-leading: 1.05;
   --text-boss-case: uppercase;
+  /* 'normal' — not an empty list — so Archivo's own font-stretch-driven
+     wdth mapping (above) proceeds untouched. Grove sets real axis
+     values here instead; see the grove block below. */
+  --text-boss-variation: normal;
 
   --text-zone-title-size: 32px;
   --text-zone-title-weight: 700;
@@ -101,6 +105,7 @@
   --text-zone-title-tracking: -0.01em;
   --text-zone-title-leading: 1.05;
   --text-zone-title-case: uppercase;
+  --text-zone-title-variation: normal;
 
   --text-stat-size: clamp(24px, 3vw, 40px);
   --text-stat-weight: 700;
@@ -108,6 +113,7 @@
   --text-stat-tracking: -0.01em;
   --text-stat-leading: 1.05;
   --text-stat-case: none;
+  --text-stat-variation: normal;
 
   /* Offsets the negative letter-spacing above so multi-word display
      type doesn't collapse into what reads as one word. */
@@ -171,6 +177,12 @@
   --text-boss-tracking: 0em;
   --text-boss-leading: 1.1;
   --text-boss-case: none;
+  /* Fraunces' custom axes — SOFT rounds the terminals, WONK lets the
+     hand-drawn alternate glyphs in. Moderate values on purpose: enough
+     character to read as a different *identity* from Forge, not so
+     much it reads as a children's-book face (WORLDS.md §3: "warm, not
+     twee — this is a product for adults learning something hard"). */
+  --text-boss-variation: 'SOFT' 60, 'WONK' 0.4;
 
   --text-zone-title-size: 32px;
   --text-zone-title-weight: 600;
@@ -178,6 +190,7 @@
   --text-zone-title-tracking: 0em;
   --text-zone-title-leading: 1.1;
   --text-zone-title-case: none;
+  --text-zone-title-variation: 'SOFT' 60, 'WONK' 0.3;
 
   --text-stat-size: clamp(24px, 3vw, 40px);
   --text-stat-weight: 600;
@@ -185,6 +198,9 @@
   --text-stat-tracking: 0em;
   --text-stat-leading: 1.1;
   --text-stat-case: none;
+  /* Stat numbers stay closer to legible/data-like even in Grove — less
+     wonk than the boss name/zone title get. */
+  --text-stat-variation: 'SOFT' 40, 'WONK' 0.1;
 
   --text-display-word-spacing: normal; /* no negative tracking to counteract here */
 
@@ -488,22 +504,30 @@
 /* because the tokens it reads differ.                                */
 /* ---------------------------------------------------------------- */
 
+/* font-family was missing here entirely until this pass — these three
+   roles silently inherited body's --font-ui instead of ever rendering
+   in the display face (Archivo/Fraunces). Caught by actually reading
+   Grove's computed font-family instead of trusting the class name. */
 .text-boss,
 .text-zone-title,
 .text-stat {
+  font-family: var(--font-display);
   word-spacing: var(--text-display-word-spacing);
 }
 .text-boss {
   font-stretch: var(--text-boss-width);
   text-transform: var(--text-boss-case);
+  font-variation-settings: var(--text-boss-variation);
 }
 .text-zone-title {
   font-stretch: var(--text-zone-title-width);
   text-transform: var(--text-zone-title-case);
+  font-variation-settings: var(--text-zone-title-variation);
 }
 .text-stat {
   font-stretch: var(--text-stat-width);
   text-transform: var(--text-stat-case);
+  font-variation-settings: var(--text-stat-variation);
 }
 
 /* clip-path AND border-radius are both always applied — Forge sets a
@@ -692,6 +716,46 @@
   border: 2px solid var(--accent);
 }
 
+/* A failing test's reaction on the opponent sprite itself — WORLDS.md
+   §4: "Counter-attack" in Forge (a sharp brightness/saturation punch,
+   reads as a retaliatory hit), "the creature droops, the light dims"
+   in Grove (settles down and darkens, no punch). Same trigger
+   (data-monster-state="attack", set once from FightScreen with no
+   world check), different keyframes per world — the fork lives here,
+   not in a component. */
+@keyframes monster-counterattack {
+  0%,
+  100% {
+    filter: none;
+  }
+  30% {
+    filter: brightness(1.3) saturate(1.4);
+  }
+}
+@keyframes monster-droop {
+  0% {
+    transform: translateY(2px) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    transform: translateY(10px) rotate(-4deg);
+    opacity: 0.55;
+    filter: brightness(0.75) saturate(0.6);
+  }
+  100% {
+    transform: translateY(2px) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+}
+[data-world='forge'] [data-monster-state='attack'] {
+  animation: monster-counterattack var(--dur-slow) var(--ease-out) 1;
+}
+[data-world='grove'] [data-monster-state='attack'] {
+  animation: monster-droop var(--dur-scene) var(--ease-out) 1;
+}
+
 /* Screen-edge pulse on a failing test — opacity only, no screen shake
    anywhere except the kill ceremony. */
 @keyframes vignette-pulse {
@@ -737,6 +801,18 @@
   .loot-pulse {
     animation: none;
     box-shadow: var(--glow-gold);
+  }
+  /* Counter-attack/droop → an instant, static version of the same
+     end-state cue instead of an animated one. */
+  [data-world='forge'] [data-monster-state='attack'] {
+    animation: none;
+    filter: brightness(1.3) saturate(1.4);
+  }
+  [data-world='grove'] [data-monster-state='attack'] {
+    animation: none;
+    transform: translateY(10px) rotate(-4deg);
+    opacity: 0.55;
+    filter: brightness(0.75) saturate(0.6);
   }
 }
 

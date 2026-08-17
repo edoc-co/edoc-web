@@ -9,3 +9,4 @@ export { default as LoadingReveal } from './LoadingReveal';
 export { default as Pressable } from './Pressable';
 export { default as Monster, type MonsterState } from './Monster';
 export { default as LenisScroll } from './LenisScroll';
+export { default as AmbientDrift } from './AmbientDrift';

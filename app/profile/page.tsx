@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { HudFrame, Label, Telemetry } from '@/components/hud';
-import { NumberTransition, Entrance } from '@/components/motion';
+import { NumberTransition, Entrance, AmbientDrift } from '@/components/motion';
+import { useWorld } from '@/lib/world/WorldProvider';
 import { PLAYER_PROFILE } from '@/lib/player/mockProfile';
 
 /**
@@ -16,6 +17,7 @@ import { PLAYER_PROFILE } from '@/lib/player/mockProfile';
  */
 export default function ProfilePage() {
   const player = PLAYER_PROFILE;
+  const { world } = useWorld();
 
   return (
     <div data-lang={player.primaryLanguage} className="min-h-screen bg-void">
@@ -25,6 +27,10 @@ export default function ProfilePage() {
         }
         rail={<Telemetry className="hidden sm:inline">Player card</Telemetry>}
       >
+        {/* Ambient drift is a composition choice, not a component-level
+            world branch (WORLDS.md §3/§8) — this page has no editor to
+            protect, so it's mounted full-bleed with no avoidSelector. */}
+        {world === 'grove' && <AmbientDrift />}
         <main className="mx-auto flex max-w-4xl flex-col gap-10 px-8 py-12">
           <Entrance className="contents">
             <div className="flex items-center gap-6">

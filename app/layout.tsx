@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Archivo, Inter, JetBrains_Mono, IBM_Plex_Mono } from 'next/font/google';
+import { Archivo, Inter, Fraunces, Nunito, JetBrains_Mono, IBM_Plex_Mono } from 'next/font/google';
 import WorldProvider from '@/lib/world/WorldProvider';
 import ModeProvider from '@/lib/mode/ModeProvider';
 import { noFlashWorldScript } from '@/lib/world/constants';
@@ -12,9 +12,10 @@ import './globals.css';
 // tokens stay the single source of truth and there's no cascade race
 // between this file's :root rule and next/font's generated class.
 //
-// Forge's faces (Archivo/Inter) load unconditionally — Forge is the
-// default world and must be available before any world choice is
-// known. Grove's faces (Fraunces/Nunito) load in Part 3.
+// Forge's faces (Archivo/Inter) and Grove's (Fraunces/Nunito) both
+// load unconditionally, up front — the world can switch mid-session
+// (WORLDS.md §7) with no reload, so both identities' type must
+// already be on the page before the switcher is ever touched.
 
 // --font-display (Forge) — condensed/expanded heavy display type (boss names, zone titles, stats).
 // Loaded as a true variable font (weight: 'variable') with the wdth axis
@@ -32,6 +33,27 @@ const inter = Inter({
   variable: '--font-ui-src',
   subsets: ['latin'],
   weight: ['400', '500'],
+});
+
+// --font-display (Grove) — Fraunces, a variable serif with two named
+// custom axes: SOFT (rounds the terminals) and WONK (lets the italic-ish
+// alternates in, for a bit of hand-drawn character). Loaded alongside
+// the opsz axis so text-boss-size display sizes get the display cut,
+// not the text-optimized one. Actual axis *values* are tokens
+// (--text-boss-variation etc. in styles/tokens.css), not set here —
+// this only makes the axes available to set.
+const fraunces = Fraunces({
+  variable: '--font-display-grove-src',
+  subsets: ['latin'],
+  weight: 'variable',
+  axes: ['SOFT', 'WONK', 'opsz'],
+});
+
+// --font-ui (Grove) — Nunito, rounded and friendly without tipping into childish.
+const nunito = Nunito({
+  variable: '--font-ui-grove-src',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 // --font-code — the user's code, in the editor. Never varies by world (WORLDS.md §5).
@@ -57,7 +79,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${inter.variable} ${jetbrainsMono.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${inter.variable} ${fraunces.variable} ${nunito.variable} ${jetbrainsMono.variable} ${ibmPlexMono.variable} h-full antialiased`}
       // The no-flash scripts below set data-world/data-mode on the
       // client before React hydrates, and the server never renders
       // those attributes — an intentional, expected mismatch (the

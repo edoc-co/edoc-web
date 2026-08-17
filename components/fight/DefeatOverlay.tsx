@@ -1,6 +1,8 @@
 'use client';
 
 import { Panel, Button, Label, Telemetry } from '@/components/hud';
+import { useWorld } from '@/lib/world/WorldProvider';
+import { FICTION } from '@/lib/world/fiction';
 import type { HintCard } from '@/lib/encounters/types';
 
 interface DefeatOverlayProps {
@@ -17,10 +19,13 @@ interface DefeatOverlayProps {
  * come from the failureMap rule matched at the moment of defeat.
  */
 export default function DefeatOverlay({ monsterName, card, rematchVariant, onRematch }: DefeatOverlayProps) {
+  const { world } = useWorld();
   return (
     <div className="overlay-scrim fixed inset-0 z-50 flex items-center justify-center px-6">
       <Panel active className="flex w-full max-w-md flex-col gap-4">
-        <Label>Defeated by {monsterName}</Label>
+        <Label>
+          {FICTION.defeatedLabel[world]} {monsterName}
+        </Label>
         {card ? (
           <>
             <h2 className="text-zone-title text-text-hi">{card.title}</h2>

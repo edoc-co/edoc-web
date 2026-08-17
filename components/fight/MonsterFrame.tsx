@@ -2,6 +2,8 @@
 
 import { Panel } from '@/components/hud';
 import { Monster, type MonsterState } from '@/components/motion';
+import { useWorld } from '@/lib/world/WorldProvider';
+import { meterDisplayValue, FICTION } from '@/lib/world/fiction';
 import BossFlourish from './BossFlourish';
 import HpBar from './HpBar';
 
@@ -37,12 +39,17 @@ interface MonsterFrameProps {
  * approach clipped the text at small sizes; plain padding doesn't.
  */
 export default function MonsterFrame({ name, hp, maxHp, state, hitFlashKey, attackMessage }: MonsterFrameProps) {
+  const { world } = useWorld();
+  // "low" is about the *combat* state (nearly defeated), not the
+  // display reading — stays computed from the raw HP in both worlds,
+  // never from the meter's inverted display value.
   const low = hp > 0 && hp / maxHp < 0.25;
+  const displayValue = meterDisplayValue(world, hp, maxHp);
 
   return (
     <div className="flex shrink-0 flex-col gap-2">
       <span className="inline-flex w-fit items-center bg-accent px-3 py-1 font-hud text-telemetry uppercase text-void">
-        Boss
+        {FICTION.bossBadgeLabel[world]}
       </span>
 
       <div className="relative">
@@ -57,9 +64,12 @@ export default function MonsterFrame({ name, hp, maxHp, state, hitFlashKey, atta
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h1 className="text-boss min-w-0 truncate text-text-hi">{name}</h1>
             <div className="flex items-center gap-4">
-              <HpBar value={hp} max={maxHp} glowVar="--glow-accent" className="flex-1" />
+              <HpBar value={displayValue} max={maxHp} glowVar="--glow-accent" className="flex-1" />
+              <span className={`shrink-0 font-hud text-telemetry uppercase ${low ? 'text-fail' : 'text-text-lo'}`}>
+                {FICTION.opponentMeterLabel[world]}
+              </span>
               <span className={`text-stat shrink-0 ${low ? 'text-fail' : 'text-text-hi'}`}>
-                {hp}/{maxHp}
+                {displayValue}/{maxHp}
               </span>
             </div>
             {attackMessage && (
