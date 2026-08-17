@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { HudFrame, Label, Telemetry } from '@/components/hud';
 import { NumberTransition, Entrance, AmbientDrift } from '@/components/motion';
 import { useWorld } from '@/lib/world/WorldProvider';
+import { FICTION } from '@/lib/world/fiction';
 import { PLAYER_PROFILE } from '@/lib/player/mockProfile';
 
 /**
@@ -84,9 +85,14 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* The one illustrative moment — space around it stays flat. */}
+            {/* The one illustrative moment — space around it stays flat.
+                Same graphic, same clip-panel/glow (token-driven since
+                Part 2 — square-clipped in Forge, rounded in Grove with
+                zero change here); only the label names it differently
+                (Part 8: "in Grove reads as companion/crest, not
+                weapon"). */}
             <section className="flex flex-col gap-3">
-              <Label>Mastered weapon</Label>
+              <Label>{FICTION.masteredIllustrationLabel[world]}</Label>
               <div
                 className="clip-panel flex h-48 items-center justify-center border border-accent bg-panel"
                 style={{ boxShadow: 'var(--glow-accent)' }}

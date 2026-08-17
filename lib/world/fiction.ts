@@ -28,4 +28,11 @@ export const FICTION = {
   defeatedLabel: { forge: 'Defeated by', grove: 'Wilted before' } as const,
   clearedLabel: { forge: 'defeated', grove: 'wilted' } as const,
   bossBadgeLabel: { forge: 'Boss', grove: 'Guardian' } as const,
+  /**
+   * Part 8 — the player card's one illustrative moment: "gets space,
+   * flat surroundings — in Grove reads as companion/crest not
+   * weapon." Same graphic, same layout, same clip-panel/glow treatment
+   * (already token-driven from Part 2) — only the label changes.
+   */
+  masteredIllustrationLabel: { forge: 'Mastered weapon', grove: 'Companion' } as const,
 } satisfies Record<string, Record<World, string>>;
