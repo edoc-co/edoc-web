@@ -2,7 +2,8 @@
 
 import { Children, isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ENTRANCE_STAGGER_MS, ENTRANCE_STAGGER_CAP, DUR, EASE_OUT } from '@/lib/motion/tokens';
+import { ENTRANCE_STAGGER_MS, ENTRANCE_STAGGER_CAP } from '@/lib/motion/tokens';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 interface EntranceProps {
   children: ReactNode;
@@ -26,11 +27,22 @@ interface EntranceProps {
  * exactly. Only after mount does `animate` change, which is what
  * actually plays the transition — as a genuine post-hydration update,
  * not something React's hydration check ever has to compare against
- * the server. Gating `initial` instead (the more obvious-looking fix)
- * doesn't work: the server would still render the *other* value.
+ * the server. Gating `initial` on `reducedMotion` (the more
+ * obvious-looking fix) doesn't work: `useReducedMotion()` reads
+ * `matchMedia` synchronously on the client, so it can already read
+ * `true` on this component's very first CLIENT render — before
+ * hydration even compares against the server, which always assumes
+ * `false` and has no `matchMedia` to check. `initial` must stay a
+ * constant so it's identical on both sides no matter what
+ * `reducedMotion` turns out to be; reduced motion is instead handled
+ * by collapsing `transition` to zero duration, so the jump from
+ * `restState` to `enteredState` is instant rather than animated —
+ * satisfying "nothing moves" without ever giving `initial` two
+ * possible values.
  */
 export default function Entrance({ children, className, itemClassName }: EntranceProps) {
   const reducedMotion = useReducedMotion();
+  const { dur, easeOut } = useMotionTokens();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -48,9 +60,9 @@ export default function Entrance({ children, className, itemClassName }: Entranc
           <motion.div
             key={key}
             className={itemClassName}
-            initial={reducedMotion ? false : restState}
-            animate={reducedMotion || mounted ? enteredState : restState}
-            transition={{ duration: DUR.slow, ease: EASE_OUT, delay }}
+            initial={restState}
+            animate={mounted || reducedMotion ? enteredState : restState}
+            transition={{ duration: reducedMotion ? 0 : dur.slow, ease: easeOut, delay }}
           >
             {child}
           </motion.div>

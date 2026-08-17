@@ -2,14 +2,31 @@
 
 import { useEffect, useState } from 'react';
 
+import type { World } from '@/lib/world/constants';
+
 export type MonsterState = 'idle' | 'hit' | 'attack' | 'defeated';
 
 interface MonsterProps {
   state: MonsterState;
   /** Fallback glyph — first letter of the monster's name — shown when no .riv asset exists. */
   spriteLabel: string;
-  /** Path to a .riv asset, when one exists. Omit to always use the static fallback. */
-  src?: string;
+  /**
+   * Path to a .riv asset, when one exists. Omit to always use the
+   * static fallback. Optionally a `{ forge, grove }` pair once
+   * per-world art exists (WORLDS.md §8: assets are the long pole,
+   * needing an artist) — a plain string still works today since no
+   * `.riv` files exist yet in either world.
+   */
+  src?: string | { forge: string; grove: string };
+  /**
+   * WORLDS.md's own naming for this wrapper is "<Opponent>... state
+   * prop + world" — accepted here so a future `{forge,grove}` src
+   * pair or a per-world Rive state machine name can be selected, but
+   * this is never used for *visual* branching (that's tokens/CSS, see
+   * styles/tokens.css's `[data-world='grove'] [data-monster-state=
+   * 'attack']` rule) — only for picking which asset file to load.
+   */
+  world?: World;
   className?: string;
 }
 
@@ -26,12 +43,13 @@ interface MonsterProps {
  * only when `src` is actually provided, so its runtime never ships to
  * a page that renders a Monster without art.
  */
-export default function Monster({ state, spriteLabel, src, className = '' }: MonsterProps) {
+export default function Monster({ state, spriteLabel, src, world, className = '' }: MonsterProps) {
   const [riveModule, setRiveModule] = useState<typeof import('@rive-app/react-canvas') | null>(null);
   const [riveFailed, setRiveFailed] = useState(false);
+  const resolvedSrc = typeof src === 'string' ? src : world ? src?.[world] : undefined;
 
   useEffect(() => {
-    if (!src) return;
+    if (!resolvedSrc) return;
     let cancelled = false;
     import('@rive-app/react-canvas')
       .then((mod) => {
@@ -41,10 +59,10 @@ export default function Monster({ state, spriteLabel, src, className = '' }: Mon
     return () => {
       cancelled = true;
     };
-  }, [src]);
+  }, [resolvedSrc]);
 
-  if (src && riveModule && !riveFailed) {
-    return <RiveStateMachine mod={riveModule} src={src} state={state} className={className} />;
+  if (resolvedSrc && riveModule && !riveFailed) {
+    return <RiveStateMachine mod={riveModule} src={resolvedSrc} state={state} className={className} />;
   }
 
   return (

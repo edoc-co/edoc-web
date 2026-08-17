@@ -59,7 +59,7 @@ export default function MonsterFrame({ name, hp, maxHp, state, hitFlashKey, atta
             <span key={hitFlashKey} aria-hidden className="monster-hit-flash pointer-events-none absolute inset-0" />
           )}
 
-          <Monster state={state} spriteLabel={name.charAt(0)} className="h-[140px] w-[140px] shrink-0" />
+          <Monster state={state} spriteLabel={name.charAt(0)} world={world} className="h-[140px] w-[140px] shrink-0" />
 
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h1 className="text-boss min-w-0 truncate text-text-hi">{name}</h1>

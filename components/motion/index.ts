@@ -7,6 +7,6 @@ export { default as ScrollReveal } from './ScrollReveal';
 export { default as NumberTransition } from './NumberTransition';
 export { default as LoadingReveal } from './LoadingReveal';
 export { default as Pressable } from './Pressable';
-export { default as Monster, type MonsterState } from './Monster';
+export { default as Monster, default as Opponent, type MonsterState } from './Monster';
 export { default as LenisScroll } from './LenisScroll';
 export { default as AmbientDrift } from './AmbientDrift';

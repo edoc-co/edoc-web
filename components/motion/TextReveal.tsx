@@ -1,7 +1,8 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { TEXT_REVEAL_STAGGER_MS, TEXT_REVEAL_DURATION_MS, EASE_OUT } from '@/lib/motion/tokens';
+import { TEXT_REVEAL_STAGGER_MS } from '@/lib/motion/tokens';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 interface TextRevealProps {
   text: string;
@@ -16,6 +17,7 @@ interface TextRevealProps {
  */
 export default function TextReveal({ text, className = '', as = 'span' }: TextRevealProps) {
   const reducedMotion = useReducedMotion();
+  const { dur, easeOut } = useMotionTokens();
   const Tag = as;
 
   if (reducedMotion) {
@@ -33,9 +35,9 @@ export default function TextReveal({ text, className = '', as = 'span' }: TextRe
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: '0%', opacity: 1 }}
             transition={{
-              duration: TEXT_REVEAL_DURATION_MS / 1000,
+              duration: dur.slow,
               delay: (i * TEXT_REVEAL_STAGGER_MS) / 1000,
-              ease: EASE_OUT,
+              ease: easeOut,
             }}
           >
             {word}

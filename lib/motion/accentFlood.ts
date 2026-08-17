@@ -38,9 +38,21 @@ export async function runAccentFlood(originEl: HTMLElement, onComplete?: () => v
   overlay.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
   document.body.appendChild(overlay);
 
+  // Read the live --dur-scene/--ease-scene rather than hardcoding
+  // Forge's 600ms/scene-ease a second time here — this is a plain
+  // function, not a component, so it can't call useMotionTokens();
+  // reading computed style directly is the same technique that hook
+  // uses internally. Falls back to Forge's literals if either var is
+  // somehow unset.
+  const root = getComputedStyle(document.documentElement);
+  const durRaw = root.getPropertyValue('--dur-scene').trim();
+  const easeRaw = root.getPropertyValue('--ease-scene').trim();
+  const durationMs = durRaw.endsWith('ms') ? parseFloat(durRaw) : durRaw.endsWith('s') ? parseFloat(durRaw) * 1000 : 600;
+  const ease = easeRaw || 'cubic-bezier(0.65, 0, 0.35, 1)';
+
   gsap.to(overlay, {
-    duration: 0.6,
-    ease: 'cubic-bezier(0.65, 0, 0.35, 1)',
+    duration: (durationMs || 600) / 1000,
+    ease,
     clipPath: `circle(${maxRadius}px at ${cx}px ${cy}px)`,
     onComplete: () => {
       overlay.remove();

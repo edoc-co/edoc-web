@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { animate, useReducedMotion } from 'framer-motion';
-import { DUR, EASE_OUT } from '@/lib/motion/tokens';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 interface NumberTransitionProps {
   value: number;
@@ -19,6 +19,7 @@ interface NumberTransitionProps {
 export default function NumberTransition({ value, className, format = (n) => Math.round(n).toString() }: NumberTransitionProps) {
   const [display, setDisplay] = useState(value);
   const reducedMotion = useReducedMotion();
+  const { dur, easeOut } = useMotionTokens();
   const prev = useRef(value);
 
   useEffect(() => {
@@ -28,13 +29,13 @@ export default function NumberTransition({ value, className, format = (n) => Mat
       return;
     }
     const controls = animate(prev.current, value, {
-      duration: DUR.slow,
-      ease: EASE_OUT,
+      duration: dur.slow,
+      ease: easeOut,
       onUpdate: (v) => setDisplay(v),
     });
     prev.current = value;
     return () => controls.stop();
-  }, [value, reducedMotion]);
+  }, [value, reducedMotion, dur.slow, easeOut]);
 
   return <span className={className}>{format(display)}</span>;
 }

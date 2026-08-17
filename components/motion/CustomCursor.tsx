@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { isTouchDevice } from '@/lib/motion/reducedMotion';
-import { CURSOR_LERP, DUR } from '@/lib/motion/tokens';
+import { CURSOR_LERP } from '@/lib/motion/tokens';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 type CursorVariant = 'default' | 'interactive' | 'drag' | 'native';
 
@@ -21,6 +22,7 @@ const SIZE: Record<CursorVariant, number> = { default: 16, interactive: 48, drag
  */
 export default function CustomCursor() {
   const reducedMotion = useReducedMotion();
+  const { dur } = useMotionTokens();
   const [enabled, setEnabled] = useState(false);
   const [variant, setVariant] = useState<CursorVariant>('default');
   const [label, setLabel] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function CustomCursor() {
         backgroundColor: variant === 'interactive' ? 'var(--accent-dim)' : 'transparent',
         opacity: variant === 'native' ? 0 : 1,
       }}
-      transition={{ duration: DUR.fast }}
+      transition={{ duration: dur.fast }}
     >
       {label && <span className="whitespace-nowrap font-hud text-[10px] uppercase text-accent">{label}</span>}
     </motion.div>
