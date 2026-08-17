@@ -11,7 +11,8 @@ import DefeatOverlay from './DefeatOverlay';
 import VictoryOverlay from './VictoryOverlay';
 import DevOutcomeControls from './DevOutcomeControls';
 import type { MonsterState } from '@/components/motion';
-import { runKillCeremony } from '@/lib/motion/killCeremony';
+import { runKillCeremony, runBloomCeremony } from '@/lib/motion/killCeremony';
+import { useWorld } from '@/lib/world/WorldProvider';
 import { runTests } from '@/lib/runtime/runTests';
 import { computeOutcome } from '@/lib/fight/engine';
 import { matchFailureRule } from '@/lib/fight/failureMap';
@@ -37,6 +38,8 @@ interface Lesson {
 const STEP_MS = 100;
 
 export default function FightScreen({ encounter }: FightScreenProps) {
+  const { world } = useWorld();
+
   // Zustand owns HP; everything else here is per-run UI state that
   // doesn't need to be global (DESIGN.md's "game state in the store,
   // text buffer local" split — this just extends that split to the
@@ -120,13 +123,19 @@ export default function FightScreen({ encounter }: FightScreenProps) {
       return;
     }
     let cancelled = false;
-    runKillCeremony(frameEl, () => {
+    // The fork lives here, at the call site — Part 6: "expressed per
+    // world, Forge shatters/shakes, Grove blooms/warms." A scripted
+    // GSAP timeline, not a token-driven component, so this is the one
+    // legitimate place to pick between two real implementations
+    // instead of two token values.
+    const runCeremony = world === 'grove' ? runBloomCeremony : runKillCeremony;
+    runCeremony(frameEl, () => {
       if (!cancelled) setCeremonyDone(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [cleared]);
+  }, [cleared, world]);
 
   const handleRun = useCallback(async () => {
     setRunning(true);
