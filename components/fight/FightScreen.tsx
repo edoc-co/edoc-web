@@ -17,6 +17,8 @@ import { runTests } from '@/lib/runtime/runTests';
 import { computeOutcome } from '@/lib/fight/engine';
 import { matchFailureRule } from '@/lib/fight/failureMap';
 import { useFightStore } from '@/lib/store/fightStore';
+import { useProctoredSession } from '@/lib/proctor/useProctoredSession';
+import { ProctoredBanner, ProctorGate } from '@/components/proctor';
 import type { Encounter, RunResult, HintCard, FailureRule } from '@/lib/encounters/types';
 
 // How long the Monster holds a reactive 'hit'/'attack' pose before
@@ -25,6 +27,13 @@ const MONSTER_REACTION_MS = 500;
 
 interface FightScreenProps {
   encounter: Encounter;
+  /**
+   * Per-session, never global (Part 7) — set from a query param on
+   * the fight route, not a persisted setting. Practice/Ranked render
+   * identically to before this existed; only 'proctored' changes
+   * anything here.
+   */
+  sessionMode?: 'practice' | 'ranked' | 'proctored';
 }
 
 interface Lesson {
@@ -37,8 +46,10 @@ interface Lesson {
 // visibly drains in step with each row resolving, not all at once.
 const STEP_MS = 100;
 
-export default function FightScreen({ encounter }: FightScreenProps) {
+export default function FightScreen({ encounter, sessionMode = 'practice' }: FightScreenProps) {
   const { world } = useWorld();
+  const proctored = sessionMode === 'proctored';
+  const proctor = useProctoredSession({ enabled: proctored });
 
   // Zustand owns HP; everything else here is per-run UI state that
   // doesn't need to be global (DESIGN.md's "game state in the store,
@@ -141,7 +152,7 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     setRunning(true);
     setAttackMessage(null);
 
-    const result = await runTests({ encounterId: encounter.id, code, mode: 'practice' });
+    const result = await runTests({ encounterId: encounter.id, code, mode: sessionMode });
     const outcome = computeOutcome(encounter, result);
 
     setLastResult(result);
@@ -189,7 +200,7 @@ export default function FightScreen({ encounter }: FightScreenProps) {
       setTimeout(() => setFlashKey((k) => k + 1), totalMs);
     }
     setTimeout(() => setRunning(false), totalMs + 50);
-  }, [encounter, code, applyDamage]);
+  }, [encounter, code, applyDamage, sessionMode]);
 
   // Zone C — left discards, right saves to the backpack, up inserts
   // the card's skeleton at the editor's cursor. Never a working
@@ -214,6 +225,14 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     setCode(encounter.starterCode);
   }, [encounter, resetFight]);
 
+  // Proctored + not yet started: the gate is the entire screen. No
+  // part of the encounter (editor included) mounts underneath it, so
+  // there's no way to interact with the fight before fullscreen is
+  // actually granted.
+  if (proctored && !proctor.active) {
+    return <ProctorGate requesting={proctor.requesting} onStart={proctor.requestStart} />;
+  }
+
   return (
     // md:h-screen + md:overflow-y-auto: fits exactly at the 1920x1080
     // target (no scrollbar appears, since content fits) but degrades
@@ -221,6 +240,13 @@ export default function FightScreen({ encounter }: FightScreenProps) {
     // shorter viewports where the editor's 420px floor plus the fixed
     // boss/test-output heights genuinely don't all fit.
     <div data-lang={encounter.language} className="flex flex-col bg-void md:h-screen md:overflow-y-auto">
+      {proctored && (
+        <ProctoredBanner
+          elapsedMs={proctor.elapsedMs}
+          violationCount={proctor.violations.length}
+          latestWarning={proctor.latestWarning}
+        />
+      )}
       <HudFrame
         brand={
           <span className="font-display text-lg font-extrabold uppercase tracking-tight text-text-hi">edoc</span>
