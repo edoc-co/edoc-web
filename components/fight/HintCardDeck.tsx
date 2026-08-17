@@ -145,7 +145,7 @@ export default function HintCardDeck({ cards, onSave, onDiscard, onInsert }: Hin
               scale: style.scale,
               touchAction: 'none',
             }}
-            className="flex cursor-grab flex-col gap-2 rounded-md border border-line bg-raised p-4 active:cursor-grabbing"
+            className="clip-card flex cursor-grab flex-col gap-2 border border-line bg-raised p-4 active:cursor-grabbing"
           >
             <Label>{card.title}</Label>
             <p className="text-body text-text-mid">{card.body}</p>
