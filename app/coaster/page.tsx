@@ -7,6 +7,8 @@ import { LenisScroll } from '@/components/motion';
 import { runAccentFlood } from '@/lib/motion/accentFlood';
 import { LANGUAGES, TRACKS, type CoasterLanguage, type Track } from '@/lib/coaster/languages';
 import CoasterCard from '@/components/coaster/CoasterCard';
+import { useWorld } from '@/lib/world/WorldProvider';
+import { FICTION } from '@/lib/world/fiction';
 
 /**
  * Zone A — DESIGN.md v2 §9: "the most kinetic surface in the product."
@@ -19,6 +21,7 @@ import CoasterCard from '@/components/coaster/CoasterCard';
  */
 export default function CoasterPage() {
   const router = useRouter();
+  const { world } = useWorld();
   const trackRef = useRef<HTMLDivElement>(null);
   const [goalTrack, setGoalTrack] = useState<Track | null>(null);
   const [scrollTick, setScrollTick] = useState(0);
@@ -50,15 +53,12 @@ export default function CoasterPage() {
       >
         <main className="flex flex-col gap-8 px-8 py-10">
           <div className="flex flex-col gap-3">
-            <h1 className="text-zone-title text-text-hi">Pick your language</h1>
-            <p className="max-w-xl text-body text-text-mid">
-              Set a track goal and the languages that matter for it pull forward — everything else recedes, but
-              stays one scroll away.
-            </p>
+            <h1 className="text-zone-title text-text-hi">{FICTION.coasterTitle[world]}</h1>
+            <p className="max-w-xl text-body text-text-mid">{FICTION.coasterSubtitle[world]}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Telemetry className="mr-2">Track goal</Telemetry>
+            <Telemetry className="mr-2">{FICTION.trackGoalLabel[world]}</Telemetry>
             {TRACKS.map((t) => (
               <button
                 key={t}

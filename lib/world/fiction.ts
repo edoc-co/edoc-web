@@ -35,4 +35,17 @@ export const FICTION = {
    * (already token-driven from Part 2) — only the label changes.
    */
   masteredIllustrationLabel: { forge: 'Mastered weapon', grove: 'Companion' } as const,
+  /**
+   * Part 10 — "Forge reads as a track; Grove reads as a path through
+   * a landscape — same mechanics, tokens carry the difference." The
+   * mechanics (scroll-driven 3D tilt/blur/depth, relevance falloff,
+   * accent-flood selection) are genuinely identical in both worlds
+   * and stay that way; only this copy names the metaphor.
+   */
+  coasterTitle: { forge: 'Pick your language', grove: 'Choose your path' } as const,
+  coasterSubtitle: {
+    forge: 'Set a track goal and the languages that matter for it pull forward — everything else recedes, but stays one scroll away.',
+    grove: 'Set a goal and the languages that matter for it step into the light — everything else drifts back, but stays one scroll away.',
+  } as const,
+  trackGoalLabel: { forge: 'Track goal', grove: 'Path goal' } as const,
 } satisfies Record<string, Record<World, string>>;
