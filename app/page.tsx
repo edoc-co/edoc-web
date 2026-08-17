@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { HudFrame, Button, Telemetry } from '@/components/hud';
 import { ScrollReveal, TextReveal, LenisScroll } from '@/components/motion';
 import HeroLoop from '@/components/landing/HeroLoop';
+import WorldPicker from '@/components/landing/WorldPicker';
+import { useWorld } from '@/lib/world/WorldProvider';
 
 const PILLARS = [
   {
@@ -28,6 +30,19 @@ const PILLARS = [
  * hero, no testimonials.
  */
 export default function LandingPage() {
+  const { hasPickedWorld } = useWorld();
+
+  // First-run only, never buried in settings (WORLDS.md §7) — a
+  // full-takeover, not a modal over the rest of the page. `hasPickedWorld`
+  // starts `true` (matching the SSR assumption) and corrects post-mount,
+  // same pattern as every other world/mode value in this app — a
+  // returning visitor never sees this; a genuine first-time visitor may
+  // see the normal page for one frame before this replaces it, the same
+  // trade-off every hydration-safe value here makes.
+  if (!hasPickedWorld) {
+    return <WorldPicker />;
+  }
+
   return (
     <div className="min-h-screen bg-void">
       <LenisScroll />
