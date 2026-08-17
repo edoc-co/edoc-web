@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import ThemeSwitcher from './ThemeSwitcher';
+import WorldModeSwitcher from './WorldModeSwitcher';
 
 interface HudFrameProps {
   children: ReactNode;
@@ -28,7 +28,7 @@ export default function HudFrame({ children, brand, rail, grain = false }: HudFr
         <div>{brand}</div>
         <div className="flex items-center gap-4">
           {rail}
-          <ThemeSwitcher />
+          <WorldModeSwitcher />
         </div>
       </header>
       <div aria-hidden className="h-px w-full bg-line" />

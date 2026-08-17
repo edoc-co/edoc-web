@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Archivo, Inter, JetBrains_Mono, IBM_Plex_Mono } from 'next/font/google';
-import ThemeProvider from '@/lib/theme/ThemeProvider';
-import { noFlashThemeScript } from '@/lib/theme/constants';
+import WorldProvider from '@/lib/world/WorldProvider';
+import ModeProvider from '@/lib/mode/ModeProvider';
+import { noFlashWorldScript } from '@/lib/world/constants';
+import { noFlashModeScript } from '@/lib/mode/constants';
 import './globals.css';
 
 // These load into "-src" variables, not the token names directly —
@@ -9,8 +11,12 @@ import './globals.css';
 // `var(--font-display-src), 'Archivo', sans-serif`, so the design
 // tokens stay the single source of truth and there's no cascade race
 // between this file's :root rule and next/font's generated class.
+//
+// Forge's faces (Archivo/Inter) load unconditionally — Forge is the
+// default world and must be available before any world choice is
+// known. Grove's faces (Fraunces/Nunito) load in Part 3.
 
-// --font-display — condensed/expanded heavy display type (boss names, zone titles, stats).
+// --font-display (Forge) — condensed/expanded heavy display type (boss names, zone titles, stats).
 // Loaded as a true variable font (weight: 'variable') with the wdth axis
 // included via `axes`, so .text-boss/.text-zone-title/.text-stat can set
 // font-stretch and actually get a different width, not just a fixed cut.
@@ -21,21 +27,21 @@ const archivo = Archivo({
   axes: ['wdth'],
 });
 
-// --font-ui — body copy, buttons
+// --font-ui (Forge) — body copy, buttons
 const inter = Inter({
   variable: '--font-ui-src',
   subsets: ['latin'],
   weight: ['400', '500'],
 });
 
-// --font-code — the user's code, in the editor
+// --font-code — the user's code, in the editor. Never varies by world (WORLDS.md §5).
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-code-src',
   subsets: ['latin'],
   weight: ['400', '700'],
 });
 
-// --font-hud — the machine's voice: labels, telemetry, the ticker
+// --font-hud — the machine's voice: labels, telemetry, the ticker. Never varies by world (WORLDS.md §5).
 const ibmPlexMono = IBM_Plex_Mono({
   variable: '--font-hud-src',
   subsets: ['latin'],
@@ -52,20 +58,25 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html
       lang="en"
       className={`${archivo.variable} ${inter.variable} ${jetbrainsMono.variable} ${ibmPlexMono.variable} h-full antialiased`}
-      // The no-flash script below sets data-theme on the client before
-      // React hydrates, and the server never renders that attribute —
-      // an intentional, expected mismatch (the standard pattern for
-      // avoiding a flash of the wrong theme), not a real bug.
+      // The no-flash scripts below set data-world/data-mode on the
+      // client before React hydrates, and the server never renders
+      // those attributes — an intentional, expected mismatch (the
+      // standard pattern for avoiding a flash of the wrong world/mode),
+      // not a real bug.
       suppressHydrationWarning
     >
       <head>
-        {/* Blocking (no async/defer) so data-theme is set before first
-            paint — no flash of the wrong theme. Reads localStorage
-            directly; ThemeProvider picks up whatever this sets. */}
-        <script dangerouslySetInnerHTML={{ __html: noFlashThemeScript() }} />
+        {/* Blocking (no async/defer) so data-world/data-mode are set
+            before first paint — no flash of the wrong world or mode.
+            Reads localStorage directly; WorldProvider/ModeProvider pick
+            up whatever these set. */}
+        <script dangerouslySetInnerHTML={{ __html: noFlashWorldScript() }} />
+        <script dangerouslySetInnerHTML={{ __html: noFlashModeScript() }} />
       </head>
       <body className="min-h-full flex flex-col bg-void text-text-hi font-ui">
-        <ThemeProvider>{children}</ThemeProvider>
+        <WorldProvider>
+          <ModeProvider>{children}</ModeProvider>
+        </WorldProvider>
       </body>
     </html>
   );

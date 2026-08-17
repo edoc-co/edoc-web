@@ -77,7 +77,9 @@ export default function StyleguidePage() {
     }
     setHexes(next);
 
-    // Re-read on theme change too — MutationObserver on <html data-theme>.
+    // Re-read on world OR mode change too — MutationObserver on
+    // <html data-world>/<html data-mode>, since either axis can change
+    // a swatch's resolved color.
     const observer = new MutationObserver(() => {
       const updated: Record<string, string> = {};
       for (const s of SWATCHES) {
@@ -86,7 +88,7 @@ export default function StyleguidePage() {
       }
       setHexes(updated);
     });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-world', 'data-mode'] });
     return () => observer.disconnect();
   }, [lang]);
 
