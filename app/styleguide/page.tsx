@@ -12,8 +12,14 @@ import {
   Entrance,
   CustomCursor,
   Monster,
+  AmbientDrift,
   type MonsterState,
 } from '@/components/motion';
+import { WORLDS, type World } from '@/lib/world/constants';
+import { MODES, type Mode } from '@/lib/mode/constants';
+import { FICTION, meterDisplayValue } from '@/lib/world/fiction';
+
+const COMBOS: { world: World; mode: Mode }[] = WORLDS.flatMap((world) => MODES.map((mode) => ({ world, mode })));
 
 /** "rgb(r, g, b)" / "rgba(r, g, b, a)" -> "#RRGGBB" (+ alpha byte if < 1). */
 function colorToHex(resolved: string): string {
@@ -118,11 +124,85 @@ export default function StyleguidePage() {
       >
         <main className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-12">
           <p className="text-body text-text-mid">
-            Use the theme switcher at the top right to check every section below in{' '}
-            <strong className="text-text-hi">default</strong>, <strong className="text-text-hi">dark</strong>, and{' '}
-            <strong className="text-text-hi">light</strong>. Light should read calm — near-zero glow, no gradients,
-            flat fills — that's intended, not a bug.
+            Use the World × Mode switcher at the top right to check every section below across all four
+            combinations. <strong className="text-text-hi">World</strong> (Forge / Grove) is art direction —
+            geometry, type, motion, fiction; <strong className="text-text-hi">Mode</strong> (Dark / Light) is
+            luminance only. Light modes should read calm — near-zero glow, no gradients, flat fills — that's
+            intended in both worlds, not a bug. The "World × Mode matrix" section below shows all four side by
+            side without touching the switcher, using the same locally-scoped <code>data-world</code>/
+            <code>data-mode</code> trick the first-run world picker uses.
           </p>
+
+          {/* World x Mode matrix — all four combinations at once, via
+              locally-scoped data-world/data-mode wrappers (same trick
+              WorldPicker uses), so this section never depends on the
+              header switcher's current state. */}
+          <section className="flex flex-col gap-4">
+            <Label>World × Mode matrix (all four, at once)</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {COMBOS.map(({ world, mode }) => (
+                <div
+                  key={`${world}-${mode}`}
+                  data-world={world}
+                  data-mode={mode}
+                  className="clip-panel flex flex-col gap-3 border border-line bg-panel p-4"
+                >
+                  <Telemetry>
+                    {world} · {mode}
+                  </Telemetry>
+                  <span className="text-boss text-2xl text-text-hi">{FICTION.bossBadgeLabel[world]}</span>
+                  <div
+                    className="clip-btn flex h-10 items-center justify-center border border-accent"
+                    style={{ boxShadow: 'var(--glow-accent)' }}
+                  >
+                    <span className="font-hud text-telemetry uppercase text-accent">glow-accent</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Fiction layer — the one permitted combat-state fork
+              (meter inversion) plus the label swaps, side by side.
+              Never a logic fork elsewhere: same 60/100 raw HP feeds
+              both readings below. */}
+          <section className="flex flex-col gap-4">
+            <Label>Fiction layer (WORLDS.md §4 — one derived value, never forked logic)</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {WORLDS.map((world) => (
+                <div key={world} data-world={world} data-mode="dark" className="clip-panel flex flex-col gap-3 border border-line bg-panel p-4">
+                  <Telemetry>{world}</Telemetry>
+                  <div className="flex items-center gap-3">
+                    <span className="font-hud text-telemetry uppercase text-text-lo">
+                      {FICTION.opponentMeterLabel[world]}
+                    </span>
+                    <span className="text-stat text-text-hi">
+                      {meterDisplayValue(world, 60, 100)}/100
+                    </span>
+                    <span className="font-hud text-[11px] text-text-lo">
+                      (raw HP: 60/100 — same combat state, different reading)
+                    </span>
+                  </div>
+                  <span className="font-hud text-telemetry uppercase text-text-lo">
+                    {FICTION.defeatedLabel[world]} · {FICTION.masteredIllustrationLabel[world]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Ambient drift — Grove only, mounted here unconditionally
+              inside a scoped Grove wrapper so it's visible regardless
+              of the page's actual world. */}
+          <section className="flex flex-col gap-4">
+            <Label>Ambient drift (Grove only — drifting petals, slow light shift)</Label>
+            <div data-world="grove" data-mode="dark" className="clip-panel relative h-32 overflow-hidden border border-line bg-panel">
+              <AmbientDrift count={5} />
+              <div className="relative flex h-full items-center justify-center">
+                <Telemetry>Reduced motion renders nothing here — that's the correct no-op, not a bug</Telemetry>
+              </div>
+            </div>
+          </section>
 
           {/* Colors */}
           <section className="flex flex-col gap-4">
@@ -277,11 +357,28 @@ export default function StyleguidePage() {
             <Label>Clip geometry</Label>
             <div className="flex flex-wrap items-end gap-6">
               <div className="clip-panel flex h-24 w-40 items-center justify-center border border-line bg-raised">
-                <Telemetry>clip-panel · 14px</Telemetry>
+                <Telemetry>clip-panel · current world</Telemetry>
               </div>
               <div className="clip-btn flex h-12 w-40 items-center justify-center border border-line bg-raised">
-                <Telemetry>clip-btn · 8px</Telemetry>
+                <Telemetry>clip-btn · current world</Telemetry>
               </div>
+              <div className="clip-card flex h-16 w-32 items-center justify-center border border-line bg-raised">
+                <Telemetry>clip-card · both worlds</Telemetry>
+              </div>
+            </div>
+            {/* Same three classes, forced Forge vs Grove side by side —
+                confirms the geometry is genuinely token-driven, not
+                assumed. clip-card is the named exception: rounded in
+                both worlds (6px Forge / 20px Grove), never clipped. */}
+            <div className="flex flex-wrap gap-6">
+              {WORLDS.map((world) => (
+                <div key={world} data-world={world} className="flex items-end gap-4">
+                  <Telemetry className="self-center">{world}</Telemetry>
+                  <div className="clip-panel flex h-16 w-24 items-center justify-center border border-line bg-raised" />
+                  <div className="clip-btn flex h-10 w-24 items-center justify-center border border-line bg-raised" />
+                  <div className="clip-card flex h-12 w-20 items-center justify-center border border-line bg-raised" />
+                </div>
+              ))}
             </div>
           </section>
 
@@ -375,7 +472,11 @@ export default function StyleguidePage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Telemetry>&lt;Monster&gt; state machine (§13) — static fallback, no .riv asset yet</Telemetry>
+              <Telemetry>
+                &lt;Monster&gt; / &lt;Opponent&gt; state machine (§13) — same component, static fallback, no .riv
+                asset yet. The Forge counter-attack vs. Grove droop-and-dim on 'attack' is pure CSS off
+                data-monster-state — try it after switching World above.
+              </Telemetry>
               <div className="flex items-center gap-4">
                 <Monster state={demoMonsterState} spriteLabel="M" className="h-20 w-20" />
                 <div className="flex flex-wrap gap-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, type ReactNode, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from 'react';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { isTouchDevice } from '@/lib/motion/reducedMotion';
 import { MAGNETIC_RADIUS_PX, MAGNETIC_MAX_TRANSLATE_PX } from '@/lib/motion/tokens';
@@ -14,11 +14,24 @@ interface MagneticProps {
  * §8.2 — showcase-register only. Translates the wrapped element up to
  * 6px toward the cursor within a 40px radius, springing back on exit.
  * Disabled on touch and reduced motion (renders a plain wrapper then).
+ *
+ * Same hydration-mismatch class as TextReveal/ScrollReveal/Entrance/
+ * AmbientDrift: `useReducedMotion()`/`isTouchDevice()` both read
+ * matchMedia synchronously, so `disabled` could already be `true` on
+ * this component's very first client render while the server (no
+ * matchMedia) always assumes `false` — a plain `<div>` vs. a
+ * `<motion.div>` is a real element-type mismatch. `mounted` starts
+ * `false` unconditionally, so `disabled` is always `false` on the
+ * first paint everywhere (matching the server); only after mount does
+ * a genuinely disabled client swap to the plain wrapper, as a normal
+ * post-hydration update.
  */
 export default function Magnetic({ children, className }: MagneticProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  const disabled = reducedMotion || isTouchDevice();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const disabled = mounted && (reducedMotion || isTouchDevice());
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);

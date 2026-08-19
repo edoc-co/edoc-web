@@ -51,6 +51,22 @@ export default function AmbientDrift({
   className = '',
 }: AmbientDriftProps) {
   const reducedMotion = useReducedMotion();
+  // Same hydration-mismatch class Entrance.tsx hit and fixed: Framer's
+  // useReducedMotion() reads matchMedia synchronously, so it can
+  // already be `true` on this component's very first CLIENT render —
+  // before hydration compares anything against the server, which has
+  // no matchMedia and always renders as if it were `false`. Gating the
+  // null-return on `reducedMotion` directly would make the server
+  // render full petal markup while the client's first render renders
+  // null, a type-level mismatch React can't patch up (a much harder
+  // failure than the usual attribute-level one). `mounted` starts
+  // `false` unconditionally, so `!mounted` is true on *both* the
+  // server and this component's first client render regardless of
+  // reducedMotion's value — only after the effect below flips it does
+  // the real reducedMotion check run, as a normal post-hydration
+  // update.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const containerRef = useRef<HTMLDivElement>(null);
   const [avoidRect, setAvoidRect] = useState<{ top: number; left: number; right: number; bottom: number } | null>(
     null
@@ -112,7 +128,7 @@ export default function AmbientDrift({
     // avoidRect intentionally drives re-placement on measure/resize.
   }, [count, avoidRect]);
 
-  if (reducedMotion) return null;
+  if (!mounted || reducedMotion) return null;
 
   return (
     <div ref={containerRef} aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
