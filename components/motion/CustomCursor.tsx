@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { isTouchDevice } from '@/lib/motion/reducedMotion';
-import { CURSOR_LERP } from '@/lib/motion/tokens';
 import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 type CursorVariant = 'default' | 'interactive' | 'drag' | 'native';
@@ -22,7 +21,7 @@ const SIZE: Record<CursorVariant, number> = { default: 16, interactive: 48, drag
  */
 export default function CustomCursor() {
   const reducedMotion = useReducedMotion();
-  const { dur } = useMotionTokens();
+  const { dur, spring } = useMotionTokens();
   const [enabled, setEnabled] = useState(false);
   const [variant, setVariant] = useState<CursorVariant>('default');
   const [label, setLabel] = useState<string | null>(null);
@@ -31,8 +30,10 @@ export default function CustomCursor() {
   const y = useMotionValue(-100);
   // A spring approximates the "~0.12 lerp" trailing feel without a
   // hand-rolled rAF loop — same idea, Framer's own primitive for it.
-  const springX = useSpring(x, { damping: 26, stiffness: 260, mass: 1 - CURSOR_LERP });
-  const springY = useSpring(y, { damping: 26, stiffness: 260, mass: 1 - CURSOR_LERP });
+  // stiffness/damping/mass come from --spring-* (styles/tokens.css),
+  // same token-not-branch pattern as every duration/ease value here.
+  const springX = useSpring(x, spring);
+  const springY = useSpring(y, spring);
 
   useEffect(() => {
     if (reducedMotion || isTouchDevice()) {

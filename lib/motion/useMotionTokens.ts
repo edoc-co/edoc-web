@@ -26,6 +26,11 @@ function parseCubicBezier(value: string, fallback: CubicBezier): CubicBezier {
   return parts.length === 4 ? (parts as CubicBezier) : fallback;
 }
 
+function parseNumber(value: string, fallback: number): number {
+  const n = parseFloat(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export interface MotionTokens {
   /** Milliseconds — for setTimeout, CSS-in-JS, etc. */
   durMs: { instant: number; fast: number; base: number; slow: number; scene: number; ghost: number; pulse: number };
@@ -34,6 +39,8 @@ export interface MotionTokens {
   easeOut: CubicBezier;
   easeSnap: CubicBezier;
   easeScene: CubicBezier;
+  /** For Framer's `useSpring(value, spring)` — the one motion axis duration/ease can't express. */
+  spring: { stiffness: number; damping: number; mass: number };
 }
 
 /**
@@ -85,6 +92,11 @@ export function useMotionTokens(): MotionTokens {
       easeOut: parseCubicBezier(readCssVar('--ease-out'), EASE_OUT),
       easeSnap: parseCubicBezier(readCssVar('--ease-snap'), EASE_SNAP),
       easeScene: parseCubicBezier(readCssVar('--ease-scene'), EASE_SCENE),
+      spring: {
+        stiffness: parseNumber(readCssVar('--spring-stiffness'), 300),
+        damping: parseNumber(readCssVar('--spring-damping'), 24),
+        mass: parseNumber(readCssVar('--spring-mass'), 0.6),
+      },
       // world/mode aren't read above, but including them in the deps
       // array is what makes this recompute on a switch — the values
       // themselves come from the DOM, not from these variables.

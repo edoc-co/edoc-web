@@ -161,6 +161,17 @@
   --dur-scene: 600ms;
   --dur-ghost: 500ms;
   --dur-pulse: 1000ms;
+
+  /* Spring physics — the one motion axis duration/ease tokens can't
+     express (Framer's useSpring takes stiffness/damping/mass, not a
+     duration). Plain numbers, read via lib/motion/useMotionTokens.ts
+     the same way the duration/ease tokens are, so Magnetic/
+     CustomCursor/HintCardDeck's "character" comes from here instead of
+     a hardcoded per-component constant. Forge: snappy, quick to
+     settle. */
+  --spring-stiffness: 300;
+  --spring-damping: 24;
+  --spring-mass: 0.6;
 }
 
 [data-world='grove'] {
@@ -230,6 +241,14 @@
   --dur-scene: 840ms;
   --dur-ghost: 700ms;
   --dur-pulse: 1400ms;
+
+  /* Softer spring — lower stiffness settles slower, slightly higher
+     mass/damping keeps it from feeling floaty despite that. Same
+     ~1.4x-gentler character as the durations above, expressed in the
+     units a spring actually takes. */
+  --spring-stiffness: 180;
+  --spring-damping: 22;
+  --spring-mass: 0.8;
 }
 
 /* ================================================================== */

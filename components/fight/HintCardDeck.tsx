@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSprings, animated } from '@react-spring/web';
 import { useDrag } from '@use-gesture/react';
 import { Label, Telemetry } from '@/components/hud';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 import type { HintCard } from '@/lib/encounters/types';
 
 interface HintCardDeckProps {
@@ -34,6 +35,19 @@ const SWIPE_THRESHOLD_VELOCITY = 0.5;
  */
 export default function HintCardDeck({ cards, onSave, onDiscard, onInsert }: HintCardDeckProps) {
   const [goneIds, setGoneIds] = useState<Set<string>>(new Set());
+  // react-spring's {tension, friction} isn't the same formula as
+  // Framer's {stiffness, damping, mass}, but both describe the same
+  // two knobs (how hard it pulls back, how much it resists) — reusing
+  // --spring-stiffness/--spring-damping here is close enough to give
+  // Grove's flick the same ~gentler character as everywhere else,
+  // without inventing a second spring token vocabulary just for this
+  // one component. Read once at mount (useSprings' initializer isn't
+  // reactive to this value the way a CSS-var-backed style would be) —
+  // correct for the world active when the fight screen loads; doesn't
+  // hot-swap mid-session if the world changes while cards are already
+  // out. Acceptable: nothing in WORLDS.md asks for physics to
+  // retune mid-flight, only for it to be token-driven at all.
+  const { spring } = useMotionTokens();
 
   const remaining = cards.filter((c) => !goneIds.has(c.id));
   const visible = remaining.slice(0, VISIBLE);
@@ -43,7 +57,7 @@ export default function HintCardDeck({ cards, onSave, onDiscard, onInsert }: Hin
     y: 0,
     rot: REST_ROTATION[i % REST_ROTATION.length],
     scale: 1,
-    config: { tension: 300, friction: 30 },
+    config: { tension: spring.stiffness, friction: spring.damping },
   }));
 
   const resolve = useCallback(

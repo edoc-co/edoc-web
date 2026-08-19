@@ -53,5 +53,11 @@ export const LOADING_THRESHOLD_MS = 200;
 export const MAGNETIC_RADIUS_PX = 40;
 export const MAGNETIC_MAX_TRANSLATE_PX = 6;
 
-/** Custom cursor (§8.1). */
+/**
+ * Custom cursor (§8.1) — historical reference only. CustomCursor.tsx's
+ * actual spring now reads --spring-* (styles/tokens.css) via
+ * useMotionTokens() instead of deriving from this, so its trail feel
+ * differs between Forge and Grove; this constant is unused but kept
+ * as a comment on what "~0.12 lerp" originally meant.
+ */
 export const CURSOR_LERP = 0.12;

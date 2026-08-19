@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from 're
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { isTouchDevice } from '@/lib/motion/reducedMotion';
 import { MAGNETIC_RADIUS_PX, MAGNETIC_MAX_TRANSLATE_PX } from '@/lib/motion/tokens';
+import { useMotionTokens } from '@/lib/motion/useMotionTokens';
 
 interface MagneticProps {
   children: ReactNode;
@@ -25,18 +26,25 @@ interface MagneticProps {
  * first paint everywhere (matching the server); only after mount does
  * a genuinely disabled client swap to the plain wrapper, as a normal
  * post-hydration update.
+ *
+ * Spring stiffness/damping/mass come from lib/motion/useMotionTokens
+ * (--spring-* in styles/tokens.css) rather than hardcoded constants —
+ * Grove's pull settles slower and softer with zero `if (world ===
+ * ...)` here, the same token-not-branch pattern the duration/ease
+ * values already use.
  */
 export default function Magnetic({ children, className }: MagneticProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const { spring } = useMotionTokens();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const disabled = mounted && (reducedMotion || isTouchDevice());
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 300, damping: 20, mass: 0.5 });
-  const springY = useSpring(y, { stiffness: 300, damping: 20, mass: 0.5 });
+  const springX = useSpring(x, spring);
+  const springY = useSpring(y, spring);
 
   if (disabled) {
     return <div className={className}>{children}</div>;
