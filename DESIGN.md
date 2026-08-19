@@ -1,342 +1,305 @@
-# edoc — Design System & Frontend Spec (v2)
+# edoc — Design & Interaction System
 
-This document is the visual source of truth. Follow it exactly. Where it is silent, choose the quieter option.
-
-**v2 changelog:** the direction moved from cold terminal-arcade to warm fantasy arcade cabinet. Base color is now deep indigo-violet, not grey-black. Two fixed energy colors (gold, cyan) exist in every theme, outside the per-language accent. Glow and two-stop gradients are allowed on chrome. The 5% accent cap now scopes to the fight screen only. Boss frames get ornamental treatment. Three themes exist: `default` (the signature warm look), `dark` (neutral, low-stimulus), and `light` (warm paper). Geometry, typography, and motion rules from v1 carry forward unchanged except where noted.
+Visual and interaction source of truth. Read `PROJECT.md` first. Where this document is silent, choose the quieter option.
 
 ---
 
-## 1. The idea in one paragraph
+## 1. What edoc feels like
 
-edoc is a fantasy arcade cabinet you operate, not a website you browse. The interface is warm, energetic, and a little theatrical — deep indigo-violet surfaces, hairline structure, condensed heavy display type, controlled glow, and mono telemetry that makes the whole thing read as instrumentation with character. References are Hot Wheels (kinetic energy, saturated color), cyberpunk (glow, HUD density), and fantasy games (ornament, character, boss presence). None of those references are copied; they inform proportion, color temperature, and motion feel only. It should not read as a developer terminal.
+You are sitting in the cockpit of a working ship. Struts frame your view, instruments surround you, space moves outside the glass. The interface is not laid over the world — it *is* the ship.
 
-**Governing rule: loud chrome, calm workspace.** The frame, HUD, monster, ticker, and cards carry all the energy. The code editor is the stillest, flattest, least-glowing surface in the product regardless of theme. That contrast is the identity — if everything moves or glows, nothing lands.
+References inform proportion and mood, never copied: worn-in retro-futurism, scrappy crews, practical instrumentation, real depth of field. Every asset original.
 
----
-
-## 2. Signature element
-
-**The interface is lit by the language you are learning.**
-
-Before a language is selected — landing page, language coaster — the UI shows no per-language accent (it reads as the theme's own ink color). The moment the user commits to a language, the entire interface floods with that language's accent: HP bars, active states, focus rings, corner brackets, cursor, damage flashes.
-
-This does three jobs: it makes selection feel consequential, it gives each language a distinct felt identity, and it is the mechanical hook for the loot economy (theme keys swap one variable).
-
-The per-language accent is a layer on top of whichever theme is active — it works in `default`, `dark`, and `light` alike. It is not the only color in the room anymore (gold and cyan are always present too), but it stays the *personal* one: nothing else changes when you pick a language.
+It must never read as a developer terminal, a course platform, or a SaaS dashboard.
 
 ---
 
-## 3. Color tokens
+## 2. The governing rule: loud hull, calm console
 
-Define these as CSS custom properties, scoped per `[data-theme]`. Never hardcode a hex outside `styles/tokens.css`.
+Every surface belongs to one of two registers. **This is the most important rule in this document.**
 
-### Themes
+### Hull register — maximum craft
+Universe map, approach sequences, landing, planet surfaces, crew lobby, pilot profile, loot reveal, all transitions.
 
-Three themes, chosen via a `data-theme` attribute on `<html>`:
+Full motion vocabulary: parallax, custom cursor, magnetic hover, shared-element transitions, entrance choreography, typed-text reveals, glow, sound.
 
-- **`default`** — warm dark, the signature look. This is what a new user sees.
-- **`dark`** — neutral, high-contrast, low-stimulus. For long sessions where the warmth becomes visual noise.
-- **`light`** — warm paper, never pure white. A comfort option. It is *supposed* to read calmer than the other two — don't fake the arcade look here with heavy shadows. Reduce glow to near zero, drop gradients, rely on hairlines and flat fills.
+### Console register — maximum calm
+The code editor and diagnostics panel.
 
+Almost nothing moves. No parallax, no ambient animation, no glow within 24px, no cursor effects, **no sound at all**. The only motion is deliberate feedback: hull drain, damage flash, diagnostics resolving.
+
+**The contrast is the point.** Someone who just flew through an asteroid field lands in a still, legible console — and when the hostile finally takes damage, it lands hard because nothing else was competing.
+
+---
+
+## 3. Signature moments
+
+Three moments carry the identity. Build them with disproportionate care.
+
+**Planet commit.** The map is monochrome until a destination is chosen. On selection the planet's accent floods outward across the whole interface over 600ms, and the ship turns toward it.
+
+**The kill.** Hostile integrity hits zero: time dilates, the hull shudders (the one place screen shake is allowed), the console flares, salvage reveals.
+
+**Loot reveal.** Gold, glow, weight, a beat of anticipation. Never instant, never a toast.
+
+---
+
+## 4. Colour
+
+Two modes. **Moon** (dark) is the default and the signature. **Sun** (light) is a comfort option — it will read calmer, which is correct; never fake depth with heavy shadows.
+
+### moon
 ```css
-/* default */
---void:#12101C --panel:#1A1728 --raised:#241F35 --line:#332B4A --line-hi:#4A3F6B
---text-hi:#F0EAE2 --text-mid:#A79FB8 --text-lo:#6E6684
---pass:#4ADE80 --fail:#FF5C6A --gold:#F0B429 --cyan:#22D3EE
-
-/* dark */
---void:#0B0C0E --panel:#141619 --raised:#1D2024 --line:#2A2E34 --line-hi:#3A404A
---text-hi:#E8E6E1 --text-mid:#A0A6AF --text-lo:#6B717A
---pass:#4ADE80 --fail:#E5484D --gold:#D9A21B --cyan:#22D3EE
-
-/* light */
---void:#F5F1E8 --panel:#FDFBF6 --raised:#EBE4D6 --line:#D8CFBE --line-hi:#BFB39C
---text-hi:#1C1828 --text-mid:#55506A --text-lo:#857E99
---pass:#15803D --fail:#C62828 --gold:#B07D0A --cyan:#0E7490
+--void:#070A12   --hull:#12161F   --hull-hi:#1B212D
+--strut:#252C3A  --line:#2E3746   --line-hi:#3D4757
+--console:#0C1119
+--text-hi:#E6EDF5  --text-mid:#94A3B4  --text-lo:#5C6878
+--pass:#4ADE80  --fail:#FF5C6A  --gold:#F0B429  --cyan:#3DD6E8
 ```
 
-`--pass` is sacred. It appears nowhere decorative. If green shows up, a test passed. Same for `--fail`. There is no `--warn`. Low HP and expiring timers are states, not colors: low HP (<20%) pulses the HP bar at 1s and turns the HP number `--fail`; an expiring timer pulses rather than changing color. Motion carries the urgency, not a third semantic hue.
-
-### Energy colors (fixed, present in every theme)
-
-`--gold` and `--cyan` sit outside the per-language accent layer — they mean the same thing regardless of which language (or no language) is selected, and regardless of theme:
-
-- **Gold** — loot, keys, rewards. Anything the player earns.
-- **Cyan** — the language coaster, the ticker, multiplayer. Anything social or exploratory.
-
-Never repurpose them for anything else, and never let a per-language accent collide with what they mean (they're allowed to share a hue with a language's accent incidentally — Go's accent is cyan too — but gold/cyan-as-*energy-colors* only ever mean loot/reward and coaster/ticker/multiplayer).
-
-### Accent (themed per language, layered on top of the active theme)
-
+### sun
 ```css
---accent:      /* set at runtime */
---accent-rgb:  /* same hue, as an "R, G, B" triplet — for rgba() mixes */
---accent-dim:  /* rgba(var(--accent-rgb), 0.4) — for fills and glows */
---accent-text: /* same hue adjusted to hit 4.5:1 on --void */
+--void:#DDE4EC   --hull:#EFF3F8   --hull-hi:#F8FAFC
+--strut:#C9D3DF  --line:#B8C4D2   --line-hi:#9FAEC0
+--console:#F7F9FC
+--text-hi:#0F1620  --text-mid:#4A5666  --text-lo:#7A8797
+--pass:#15803D  --fail:#C62828  --gold:#B07D0A  --cyan:#0E7490
 ```
 
-Language assignments (base values — used by both `default` and `dark`, since both are dark-void themes):
+### Role separation — enforce strictly
 
-| Language | `--accent` |
-|---|---|
-| *(none selected)* | that theme's `--text-hi` |
-| Python | `#E89B2C` |
-| JavaScript | `#E5D63C` |
-| TypeScript | `#3B82F6` |
-| Go | `#22D3EE` |
-| Rust | `#F26430` |
-| Java | `#D9544F` |
-| C++ | `#EC4899` |
-| SQL | `#8B5CF6` |
+| Token | Means | Never for |
+|---|---|---|
+| `--accent` | The active planet/language. Structure, focus, integrity bars, ornament. | Loot |
+| `--gold` | Salvage, keys, shards, rewards. | Structure |
+| `--cyan` | Ship systems, comms, crew, multiplayer, live signals. | Single-player state |
+| `--pass` | A test passed. Nothing else, ever. | Decoration |
+| `--fail` | A test failed or hull damage. Nothing else. | Decoration |
 
-**`light` theme gets its own darker/desaturated variant per language**, not a reuse of the dark-theme hex — a hue tuned for 4.5:1 on a near-black void rarely still hits 4.5:1 on a warm cream one. Verify each one.
+### Planet accents
 
-**Rule: no language may be assigned a green hue.** Green belongs to `--pass` and nothing else. If a green language accent is ever needed, shift it to teal-violet instead.
+| Language | moon | sun |
+|---|---|---|
+| *(none — map idle)* | `#E6EDF5` | `#0F1620` |
+| Python | `#E89B2C` | `#8A5A0B` |
+| JavaScript | `#E5D63C` | `#7A6B0A` |
+| TypeScript | `#3B82F6` | `#1D4ED8` |
+| Go | `#22D3EE` | `#0E7490` |
+| Rust | `#F26430` | `#9A3412` |
+| Java | `#D9544F` | `#991B1B` |
+| C++ | `#EC4899` | `#9D174D` |
+| SQL | `#8B5CF6` | `#5B21B6` |
 
-### Accent budget — now scoped to the fight screen only
+No planet may take a green hue — green belongs to `--pass`. Every accent must hit 4.5:1 on its mode's `--void`.
 
-On the fight screen (Zone B), the accent may occupy no more than roughly 5% of visible pixels: HP bar fill, one active state, focus ring, cursor, damage flash, one primary CTA. If the fight screen looks colorful, remove accent until it doesn't — the editor and the combat readouts still need to read calm and legible above all else.
+`--glow-accent`, `--glow-gold`, `--glow-cyan` are box-shadow tokens, all `none` in sun mode, never applied within 24px of the console.
 
-**Everywhere else, color can be freer.** The coaster, the ticker, the player card, loot moments, and the styleguide are allowed to use gold, cyan, and accent more liberally — this is the "arcade cabinet" energy the v2 direction asks for. Freer doesn't mean unlimited: still no more than one accent color plus the two energy colors visible at once, still no rainbow-coding.
-
-### Glow
-
-Glow is allowed — a controlled outer glow (`box-shadow`, soft, not a hard ring) on:
-
-- Active panels (accent glow)
-- HP bars above 50% (accent glow)
-- Loot drops and reward moments (gold glow)
-- Boss frames, in `default` and `dark` only
-
-**Never on or near the editor**, in any theme. The editor is the one surface glow is not allowed to touch, full stop.
-
-Three tokens carry this: `--glow-accent`, `--glow-gold`, `--glow-cyan` — each a full `box-shadow` value. All three resolve to `none` in `light` theme; components don't need to branch on theme themselves, the token already does it.
-
-### Gradients
-
-Two-stop gradients are allowed on chrome (header bars, boss nameplates, primary buttons) via `--chrome-surface`, a two-stop `linear-gradient(135deg, var(--panel), var(--raised))`. **Never on the editor surface.** In `light` theme, `--chrome-surface` redefines to a flat `var(--panel)` fill — no gradients there.
+**Accent budget:** under ~5% of pixels on the fight screen. No cap on hull-register surfaces.
 
 ---
 
-## 4. Typography
-
-Three roles, three faces. Load only the weights listed. Unchanged from v1.
+## 5. Type
 
 ```css
---font-display: 'Archivo', sans-serif;        /* variable, use width + weight axes */
---font-ui:      'Inter', sans-serif;          /* 400, 500 */
---font-code:    'JetBrains Mono', monospace;  /* 400, 700 — the user's code */
---font-hud:     'IBM Plex Mono', monospace;   /* 400, 500 — the machine's voice */
+--font-display: 'Archivo';        /* variable — wdth + wght axes both used */
+--font-ui:      'Inter';
+--font-code:    'JetBrains Mono'; /* the pilot's code */
+--font-hud:     'IBM Plex Mono';  /* the ship's voice */
 ```
 
-Two monospace faces is deliberate: JetBrains Mono is what the human writes in, IBM Plex Mono is what the system says back. Never swap them.
-
-### Scale
+Two monospaces is deliberate. JetBrains Mono is what the human writes; IBM Plex Mono is what the ship says back. Never swap them.
 
 | Role | Face | Size | Weight / width | Case | Tracking |
 |---|---|---|---|---|---|
-| Boss name | display | 48–72px | 800, expanded | UPPER | -0.02em |
-| Zone title | display | 32px | 700, expanded | UPPER | -0.01em |
-| Stat number | display | 24–40px | 700, condensed | — | -0.01em |
-| Section label | hud | 12px | 500 | UPPER | 0.12em |
+| Hostile / planet name | display | 40–56px | 800 / expanded | UPPER | -0.02em, word-spacing 0.12em |
+| Zone title | display | 32px | 700 / expanded | UPPER | -0.01em |
+| Instrument number | display | 19–40px | 600 / condensed | — | -0.01em |
+| Instrument label | hud | 9–10px | 500 | UPPER | 0.16em |
+| Telemetry | hud | 9–11px | 400 | UPPER | 0.09em |
 | Body / UI | ui | 15px | 400 | Sentence | 0 |
-| Button | ui | 14px | 500 | UPPER | 0.06em |
-| Telemetry | hud | 11–12px | 400 | UPPER | 0.08em |
-| Editor | code | 14px | 400 | — | 0 |
+| Button | ui | 12–14px | 500 | UPPER | 0.16em |
+| Console | code | 13.5px | 400 | — | 0 |
 
-Editor line-height is **1.7**. Everything else 1.5. Display type 1.05. Boss name and Zone title use Archivo's `wdth` axis at its expanded end (~125%); Stat number uses the condensed end (~75%) — set via `font-stretch`, not a separate cut of the face. Word-spacing (`0.12em`) is added on all three display roles to offset the negative letter-tracking, so multi-word display type doesn't read as one word.
+Console line-height 1.75. Everything else 1.5. Display 1.05.
 
-### Telemetry copy
+**Telemetry must be true.** `HULL 78/100` reflects real state. `SECTOR 04 · PYTHON PRIME` reflects the real location. Accurate text that looks decorative is what makes the ship feel real.
 
-Fake system readouts are chrome, but they must never lie about state. `HP 340/500` reflects real HP. `SYS://PY_CORE/E04` reflects the real encounter ID. Decorative-looking text that is actually accurate is what makes the machine feel real.
+**Typed-text reveal** on major headings only — characters appear sequentially with keyboard sound. Never on body copy, never in the console, never on anything needing fast reading.
 
-Write all UI copy in sentence case, active voice, plain verbs. `Run code`, not `Execute Submission`. Errors state what broke and what to do; they never apologize.
+Copy: sentence case, active voice, plain verbs. `Run code`, not `Execute Submission`. No emoji.
 
 ---
 
-## 5. Geometry
+## 6. Geometry
 
-**No rounded corners on chrome.** This is still the most identity-defining rule.
+No rounded corners on hull chrome.
 
 ```css
-/* Panels, HUD frames, modals */
---clip-panel: polygon(
-  0 14px, 14px 0, 100% 0,
-  100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%
-);
-
-/* Buttons, pills, badges */
---clip-btn: polygon(
-  0 8px, 8px 0, 100% 0,
-  100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%
-);
+--clip-panel: polygon(0 13px, 13px 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%);
+--clip-btn:   polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
 ```
 
-Cut the top-left and bottom-right corners. Keep the diagonal direction consistent everywhere — mixed diagonals read as noise.
+Top-left and bottom-right cut, one diagonal direction everywhere.
 
-**Exception 1:** hint cards in Zone C get `border-radius: 6px` and no clip. They are physical objects being handled, not machine chrome. The difference should be felt.
+- Borders 1px `--line`. Never 2px except focus rings.
+- **Cockpit struts** frame the viewport: top strut with an angled underside, left and right struts with a canopy notch, bottom console bank rising from the base. All `clip-path` on gradient fills — no images required for v1.
+- The console is **recessed**: inset shadow ring plus a darker fill than the hull around it. It should read as a screen set into a panel.
+- Instrument bays are small stacked panels with a label, a bar, and a value.
+- Optional grain/scanline, max 3%, static, never animated.
 
-**Exception 2 (new in v2):** boss frames get ornamental treatment — this is fantasy presence, not military discipline:
-
-- A heavier border — 3px, not 1px. The one other place a chrome border exceeds the 1px hairline rule.
-- A soft accent glow (`--glow-accent`), off in light theme.
-- Four small gold corner flourishes (diamonds, not brackets) — decorative, not functional; they don't mean "active panel" the way corner brackets do.
-- A nameplate — a small gold-filled tag naming what this frame is, overlapping the top border like a plate riveted to it.
-
-### Other structural rules
-
-- Chrome borders are `1px solid var(--line)` by default. Never 2px, except the boss frame's 3px (above). Never a colored border except on focus, an active panel's accent, or the boss frame.
-- **Corner brackets** mark the active panel: four 14px L-shapes in `--accent`, 1px, inset 6px. Only one panel wears them at a time. Boss frames use flourishes instead, not brackets.
-- **Dividers between major zones** are skewed ~4°, not 45°. Subtle, not decorative.
-- Grain/scanline overlay: static PNG or CSS, **max 3% opacity, never animated**. Optional — cut it if it costs clarity.
-
-### Spacing
-
-`4 / 8 / 12 / 16 / 24 / 32 / 48 / 64`. Nothing between. Panel padding is 24px, card padding 16px, dense HUD rows 8px.
+Spacing: `4 / 8 / 12 / 16 / 20 / 24 / 32 / 48 / 64`.
 
 ---
 
-## 6. Motion
+## 7. Motion
 
 ```css
---dur-fast:  120ms;  /* hover, focus, toggle */
---dur-base:  180ms;  /* panel state change */
---dur-slow:  300ms;  /* damage, transitions */
---dur-ghost: 500ms;  /* HP bar ghost segment, trailing the primary drain */
---dur-pulse: 1000ms; /* low-HP bar pulse, expiring-timer pulse */
---ease-out:  cubic-bezier(0.2, 0, 0, 1);
---ease-snap: cubic-bezier(0.34, 1.2, 0.64, 1);  /* card release only */
+--dur-instant: 80ms;  --dur-fast: 140ms;  --dur-base: 220ms;
+--dur-slow:   360ms;  --dur-scene: 600ms;
+
+--ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+--ease-snap:  cubic-bezier(0.34, 1.3, 0.64, 1);
+--ease-scene: cubic-bezier(0.65, 0, 0.35, 1);
 ```
 
-Rules — unchanged from v1:
-
-1. **Motion is reactive, never ambient.** Things move because the user did something. The only exceptions are the monster's idle breathing loop (4s, ±2px translate) and the ticker strip.
-2. **Animate `transform` and `opacity` only.** Anything touching layout will stutter the editor mid-keystroke. (A glow's `box-shadow` is set/cleared, not animated between values, for the same reason — it can transition, but don't keyframe it.)
-3. **No full-screen shake on a failed test.** That is exhausting by the third fight. Failure = the offending editor line flashes `--fail` + a single screen-edge vignette pulse (300ms). Reserve real screen shake for boss defeat and boss kill.
-4. Every effect ships with a `prefers-reduced-motion: reduce` variant. Shake → border flash. Parallax → static. Card physics → instant snap. A pulsing glow → a fixed, permanently-on glow instead of motion.
+1. Motion is reactive. Ambient motion exists only in: starfield drift, companion idle hover, and ship hum indicators.
+2. Animate `transform`, `opacity`, `filter`, `clip-path` only. Never layout properties.
+3. **Nothing animates while the console has focus.**
+4. Every effect ships a `prefers-reduced-motion: reduce` variant in the same commit.
 
 ---
 
-## 7. Zone specs
+## 8. Interaction primitives
 
-### Landing page
+Build each once in `components/motion/`, then apply consistently. **Hull register only unless noted.**
 
-The theme's own ink color only, no per-language accent yet. Display type doing the heavy lifting. One CTA. The hero should show the actual fight interface running — a live or looped encounter — rather than describing it. No feature-card grid, no testimonial row. A `--chrome-surface` gradient hero background is fine now (v1 forbade all gradient heroes; v2 allows it since it's chrome, not the editor).
+**8.1 Parallax depth** — 4–5 layers (far stars, near stars, planet, ring, foreground dust) translating on mouse at increasing depth factors. `transform` only. This is the entire "3D" effect; no WebGL.
 
-### Zone A — Language coaster
+**8.2 Custom cursor** — small cyan reticle with 0.12 lerp, scaling on interactive elements. **Reverts to the native cursor inside the console.**
 
-The only place kinetic energy is allowed to be extravagant, and now also the home of `--cyan` (multiplayer/coaster's fixed color) as ambient chrome. It is a ten-second experience, so it can afford it.
+**8.3 Magnetic hover** — buttons and planet nodes translate up to 6px toward the cursor within 40px. Disabled on touch.
 
-- Heavy perspective, cards tilting along a curve as they enter and exit
-- Momentum scroll with real inertia and friction; snap to nearest
-- Depth blur and opacity falloff on distant items
-- **Relevance depth:** if the user has picked a goal/track, matching languages pull forward and stay lit; the rest recede into haze but remain reachable
-- Each language card shows its accent only as a thin edge before selection, previewing what the UI will become
-- Cap primary track tags at 3 per language
+**8.4 Shared-element transitions** — never hard cuts. A planet node morphs into the approach view; the hostile frame morphs into the salvage card. 600ms, `--ease-scene`, Framer Motion `layoutId`. **Highest-leverage pattern in the product.**
 
-Build this **last**. Fake it with CSS parallax until the fight loop is proven.
+**8.5 Entrance choreography** — 40ms stagger, 8px translate, opacity 0→1, capped at ~6 items before the rest arrive together.
 
-### Zone B — Fight screen
+**8.6 Typed-text reveal** — per-character with keyboard sound, headings only.
 
-Still the calmest surface in the product — this did not change in v2. The 5% accent cap still applies here specifically (§3).
+**8.7 Number transitions** — every changing stat animates over 360ms, never snaps. Integrity bars drain with a lighter ghost segment trailing 500ms — the strongest feedback signal in the fight loop.
 
-- **Editor pane: flat `--panel`, 1px `--line` border, no glow, no gradient, 24px padding, 1.7 line-height, in every theme.** This is the one place the warm/energetic v2 direction stops.
-- Monster sits above in its own ornamental boss frame (§5 exception 2) with corner flourishes and a nameplate, not a plain clipped panel with brackets.
-- HP bar: 6px tall, `--accent` fill on `--raised` track, hard edges. A soft `--glow-accent` above 50% HP; below 20% it pulses at 1s and the HP number turns `--fail`, instead of glowing or changing fill color. Damage drains in 300ms with a lighter "ghost" segment trailing behind for 500ms.
-- Test output panel below the editor in `--font-hud`. Pass rows get a `--pass` left tick; fail rows `--fail`.
-- **Damage feedback:** failing line highlights `--fail` at 12% inside the editor (CodeMirror decoration, flat, no glow), screen-edge vignette pulse, HP drop. Nothing else.
-- **Hit feedback:** the passing test row ticks green in sequence, monster HP drains, a single accent flash across the monster frame.
-- Loot/reward moments (post-fight drops) use `--gold` with a glow — the one place gold appears inside Zone B.
-- **Hide the ticker entirely during an active fight.**
-- No ambient particles, no floating elements, no idle animation anywhere in this zone except the monster's breathing.
+**8.8 Loading as experience** — no spinners. Route loads show the destination assembling: struts drawing in, instruments powering up. Under 200ms, show nothing.
 
-### Zone C — Hint cards
+**8.9 Press physics** — every button scales to 0.97 on press, releasing on `--ease-snap`.
 
-Physical objects, not UI.
-
-- Rounded 6px, `--raised`, subtle 1px `--line`
-- Rest state carries ±2° rotation so the stack looks handled
-- Real drag physics with velocity-based release (`@use-gesture` + `react-spring`)
-- Swipe left = discard (card tumbles away), right = save (snaps toward the backpack icon), up = insert skeleton into editor
-- **Bind all three to arrow keys.** A product teaching keyboard-driven work must not require a mouse.
-- Virtualize: render 3 cards, never the full deck
-
-### Ticker
-
-`--font-hud`, 11px, `--text-lo`, with `--cyan` available for anything multiplayer-flavored moving through it. One `transform: translateX` on a single strip — never per-item DOM insertion. Present in lobby and profile, absent in fights.
-
-### Player card / profile
-
-Treat as a spec sheet with character, not a flat dashboard. Dense HUD rows, condensed stat numbers, hairline dividers, gold accents on earned loot/certificates. The mastered-language weapon graphic is the one illustrative moment — give it space, a glow is fine here, and keep everything around it disciplined.
+**8.10 Sound** — global toggle, default off with one prompt. Ship hum, console clicks, hull impacts, engine burn, docking, loot chime, keyboard on typed text. Route all audio through one manager. **Muted entirely while the console has focus.**
 
 ---
 
-## 8. Themes
+## 9. Screen specs
 
-A `ThemeProvider` sets `data-theme` on `<html>`, persists the choice (e.g. `localStorage`), and defaults to `default`. A blocking inline script runs before first paint to apply the persisted choice immediately — no flash of the wrong theme.
+### Landing
+Hull register. Opens inside the cockpit; the viewport shows the universe. Typed-text hero. Nav reads as ship systems — Navigation, Systems, Crew, Hangar, Comms — not Learn/Practice/Build. One CTA. No feature-card grid, no gradient hero, no testimonials.
 
-A compact three-way switcher (`default` / `dark` / `light`) lives in the HUD header, present on every screen that uses it, and again on `/styleguide`.
+### Universe map
+The language selector. Planets on orbital paths, monochrome until one is chosen. Scroll or drag to move through the system with inertia; hovering a planet surfaces its dossier. Selecting triggers the accent flood (§3) and a shared-element transition into the approach.
 
-Every component reads color exclusively through the CSS custom properties in §3 — never a literal hex — so all three themes fall out of the token layer with no component-level branching. The one thing that *does* need explicit per-theme handling is contrast: verify every accent, and every text-on-surface pairing, hits 4.5:1 in all three themes independently. Light is the easiest to get wrong — check it specifically, don't assume "we tuned dark, light will be fine."
+Parallax and pre-rendered orbital motion — no real-time 3D.
 
----
+### Approach / fight
+Console register at the centre, hull register at the edges. **Must fill one viewport with no page scroll**, and stack cleanly at 390px.
 
-## 9. Do not
+- Cockpit struts frame the edges; parallax starfield and planet behind
+- Left bay: hull integrity (player), ship telemetry, crew status
+- Centre: the console — recessed, flat, still, 1.75 line-height, no glow
+- Diagnostics panel directly beneath the console, full console width, ~104px, internal scroll
+- Right bay: hostile integrity, threat log, salvage
+- Companion robot bottom-left with the hint; Run Code bottom-right
+- On pass: diagnostics rows resolve to `--pass` in sequence, hostile integrity drains per test damage, accent flash
+- On fail: failing line highlights `--fail` at 12% via CodeMirror decoration, screen-edge pulse, hull drops, threat message. **No screen shake**
+- On defeat: companion surfaces the `failureMap` lesson, then rematch
+- On kill: the §3 ceremony
 
-- More than one accent color plus the two energy colors visible at once
-- Glitch effects as decoration (failure states only, sparingly)
-- Rounded cards with soft drop shadows outside the two named exceptions (hint cards, boss frame) — reads as generic SaaS
-- Emoji anywhere in the UI
-- Pure white `#FFF` or pure black `#000`
-- Rainbow-coded categories in the coaster
-- Any animation, glow, or gradient that runs on or near the editor, in any theme
-- Faking the arcade look in light theme with heavy shadows — light is a calm, comfort option by design
+### Planet surface
+Hull register. Illustrated scene with hotspots; each hotspot is a module and reflects that world's real features — never generic. Skippable in one click for players who want to go straight to work.
 
----
+### Crew lobby
+Hull register. Ship interior, crew at stations, live chat, ready states. Boarding is a skippable cutscene.
 
-## 10. Implementation notes
-
-**Stack:** Next.js (App Router) + Tailwind + Zustand. Tailwind theme extends from the CSS variables above — do not duplicate values in `tailwind.config`.
-
-**Editor: CodeMirror 6, not Monaco.** CM6 is ~200KB vs ~5MB, works on touch, and its theming system is a swappable object — which is exactly what the loot economy needs. Use CM6 decorations for damage highlighting inside the editor. The editor's own theme reads the same CSS variables as everything else, so it re-themes automatically — but never gains glow or gradient no matter what theme is active.
-
-**Performance budget** (editor + monster + cards + ticker on one screen is a real constraint):
-
-- Tear down the Zone A canvas when entering a fight. `display: none` is not enough — a backgrounded R3F scene still burns frames.
-- Keep the editor buffer out of the global Zustand store. Game state (HP, combo, shards) in the store; text buffer local.
-- One `requestAnimationFrame` loop for all game animation, not one per component. (Prefer plain CSS transitions/keyframes where the effect allows — they run on the compositor and don't depend on the tab actively compositing frames the way a hand-rolled `requestAnimationFrame` polling loop does.)
-- Ticker, HP drain, and damage flashes are all `transform`/`opacity`.
-
-**Mock the runtime.** Build the entire fight feel against a fake `runTests()` that resolves pass/fail after 300ms. The real execution backend can land later without touching the frontend.
-
-**Accessibility floor** (non-negotiable, and universities will ask):
-
-- Visible focus ring on every interactive element, in all three themes — 2px `--accent`, offset 2px
-- All accent-on-`--void` and text-on-surface combinations hit 4.5:1; verify each language accent **in each theme**, light especially
-- Full keyboard path through fight, cards, and coaster
-- `prefers-reduced-motion` honored everywhere, including anything glow-related
-- Responsive down to 390px — the fight screen stacks vertically, cards become a bottom sheet
+### Pilot profile
+Hull register. A ship's manifest, not a dashboard: dense instrument rows, condensed numbers, hairline dividers, animated numbers on load. The mastered-language emblem is the one illustrative moment — give it space, keep everything around it flat. Conspicuously empty project slot.
 
 ---
 
-## 11. Build order
+## 10. Performance budget
 
-1. Design tokens + app shell (HUD frame, nav, clip utilities, themes)
-2. Fight screen with mocked runtime — this is the product, prove it first
-3. Hint card deck
-4. Player card / profile
-5. Landing page
-6. Language coaster with real 3D
+- One `requestAnimationFrame` loop for all animation, not one per component
+- Console text buffer in local state, never the global store
+- Tear down heavy views on route change — hiding them still burns frames
+- Virtualize every list
+- Lazy-load cutscenes, planet scenes, sound
+- 60fps during a fight on a mid-range laptop; if a hull effect costs console frames, the effect loses
+- Lighthouse ≥ 85 on landing
 
 ---
 
-## 12. Definition of done, per screen
+## 11. Accessibility floor
 
-- No hardcoded hex outside the token file
-- Fight screen: accent covers under ~5% of pixels. Elsewhere: at most one accent + the two energy colors visible at once.
-- Every clipped corner uses the same diagonal direction (boss frame and hint cards are the two named exceptions to clipping itself)
-- Nothing animates, glows, or gradients on or near the editor
+Launch requirement, not polish.
+
+- Visible focus ring on every interactive element in both modes — 2px `--accent`, 2px offset
+- Full keyboard path through map, fight, and companion
+- `prefers-reduced-motion` honoured everywhere: shake → border flash, parallax → static, typed text → immediate
+- All text 4.5:1 in both modes
+- Never encode state in colour alone — pass and fail rows carry a glyph
+- Live region announcements for integrity changes and test results
+- Works at 390px and 200% zoom
+- Sound never required to understand state
+
+---
+
+## 12. Do not
+
+- Real-time 3D where parallax will do
+- Neon glow on everything
+- Gold for structure, or accent for loot
+- More than one planet accent visible at once
+- Gradients on the console
+- Ambient particles near the console
+- Any sound while the console has focus
+- Scroll-jacking
+- Spinners
+- Licensed IP in any asset
+- Pure `#FFF` or `#000`
+- Any animation while the console has focus
+
+---
+
+## 13. Motion tech stack
+
+| Tool | Job | Never for |
+|---|---|---|
+| **Framer Motion** | Default. Component state, layout, all `layoutId` transitions. | Long scripted sequences |
+| **GSAP** | Scripted cinematics: kill sequence, loot reveal, accent flood. | Component state |
+| **Lenis** | Smooth scroll on landing and universe map only. | The fight screen, ever |
+| **Rive** | Companion robot and hostile state machines; loot reveal. | Static illustration |
+| **Howler** | Audio manager with global mute. | — |
+
+**Three.js is not used.** Parallax and pre-rendered video cover the requirement.
+
+Everything except CodeMirror and Framer Motion is dynamically imported and torn down on route change. The fight screen must never load Lenis.
+
+`.riv` files are authored in Rive's editor — an art dependency, not an engineering one. Every Rive component needs a static fallback so screens work before art exists.
+
+---
+
+## 14. Definition of done, per screen
+
+- No hardcoded hex, size, or duration outside the token file
+- Verified in both modes
+- Role separation intact
+- One diagonal direction on all clips
+- Nothing animates or sounds while the console has focus
 - Reduced-motion variant exists and was tested
-- Contrast verified in all three themes, light specifically
-- Keyboard-only pass completes the primary task, focus ring visible in all three themes
-- Screen holds at 390px wide
+- Keyboard-only pass completes the primary task
+- Holds at 390px and 200% zoom
+- 60fps during interaction
