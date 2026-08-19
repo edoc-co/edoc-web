@@ -1,0 +1,874 @@
+/**
+ * edoc design tokens — DESIGN.md + WORLDS.md.
+ * Single source of truth for color, type, spacing, motion, and
+ * geometry. tailwind.config.ts reads these via var(...) references;
+ * it never repeats a literal value from this file.
+ *
+ * Two independent axes (WORLDS.md §1): `data-world` ("forge" | "grove")
+ * is the art direction — geometry, typography, motion character, glow
+ * character. `data-mode` ("dark" | "light") is luminance only.
+ *
+ * Selector strategy:
+ *   [data-world='X']                     — geometry, motion, type (mode-independent)
+ *   [data-world='X'][data-mode='Y']       — color, glow, shadow (both axes)
+ *   [data-mode='Y'] [data-lang='Z']       — language accents (WORLDS.md §5: "same
+ *                                           hues in both worlds; only light/dark differ")
+ *
+ * Components read these tokens and must not branch on world — see the
+ * --corner-bracket-opacity / --active-border-width pair below for how
+ * "corner brackets in Forge, soft border in Grove" is expressed as
+ * token values rather than a component-level `if (world === ...)`.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- */
+  /* Typeface faces that must NEVER differ by world (WORLDS.md §5):    */
+  /* code and telemetry legibility is not an aesthetic decision.       */
+  /* ---------------------------------------------------------------- */
+  --font-code: var(--font-code-src), 'JetBrains Mono', monospace; /* 400, 700 — the user's code, always */
+  --font-hud: var(--font-hud-src), 'IBM Plex Mono', monospace; /* 400, 500 — the machine's voice, always */
+
+  /* Section label / telemetry / button roles are HUD/UI chrome, not
+     part of either world's *display* identity — same size/case/
+     tracking in both worlds. (Boss name / zone title / stat number
+     ARE world-scoped — see [data-world] below.) */
+  --text-label-size: 12px;
+  --text-label-weight: 500;
+  --text-label-tracking: 0.12em;
+  --text-label-leading: 1.5;
+
+  --text-body-size: 15px;
+  --text-body-weight: 400;
+  --text-body-tracking: 0em;
+  --text-body-leading: 1.5;
+
+  --text-button-size: 14px;
+  --text-button-weight: 500;
+  --text-button-tracking: 0.06em;
+  --text-button-leading: 1.5;
+
+  --text-telemetry-size: 12px;
+  --text-telemetry-weight: 400;
+  --text-telemetry-tracking: 0.08em;
+  --text-telemetry-leading: 1.5;
+
+  --text-editor-size: 14px;
+  --text-editor-weight: 400;
+  --text-editor-tracking: 0em;
+  --text-editor-leading: 1.7;
+
+  --border-width: 1px;
+
+  /* Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 — this is
+     Tailwind's default 4px-based numeric scale (p-1..p-16), so no
+     custom spacing tokens are defined here. See tailwind.config.ts. */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  --grain-opacity: 0.03;
+}
+
+/* ================================================================== */
+/* World-scoped: geometry, motion, display/UI typography. Mode-        */
+/* independent — "World defines geometry/type/motion; mode defines     */
+/* luminance only" (WORLDS.md §1).                                     */
+/* ================================================================== */
+
+:root,
+[data-world='forge'] {
+  --font-display: var(--font-display-src), 'Archivo', sans-serif; /* variable, wdth + wght axes */
+  --font-ui: var(--font-ui-src), 'Inter', sans-serif; /* 400, 500 */
+
+  /* Boss name / zone title / stat number — Forge: UPPER, tight
+     tracking, Archivo's width axis actually driving expanded/condensed
+     (font-stretch, not a second cut of the face). */
+  --text-boss-size: clamp(40px, 4vw, 56px);
+  --text-boss-weight: 800;
+  --text-boss-width: 125%; /* expanded, via Archivo's wdth axis */
+  --text-boss-tracking: -0.02em;
+  --text-boss-leading: 1.05;
+  --text-boss-case: uppercase;
+  /* 'normal' — not an empty list — so Archivo's own font-stretch-driven
+     wdth mapping (above) proceeds untouched. Grove sets real axis
+     values here instead; see the grove block below. */
+  --text-boss-variation: normal;
+
+  --text-zone-title-size: 32px;
+  --text-zone-title-weight: 700;
+  --text-zone-title-width: 125%;
+  --text-zone-title-tracking: -0.01em;
+  --text-zone-title-leading: 1.05;
+  --text-zone-title-case: uppercase;
+  --text-zone-title-variation: normal;
+
+  --text-stat-size: clamp(24px, 3vw, 40px);
+  --text-stat-weight: 700;
+  --text-stat-width: 75%; /* condensed */
+  --text-stat-tracking: -0.01em;
+  --text-stat-leading: 1.05;
+  --text-stat-case: none;
+  --text-stat-variation: normal;
+
+  /* Offsets the negative letter-spacing above so multi-word display
+     type doesn't collapse into what reads as one word. */
+  --text-display-word-spacing: 0.12em;
+
+  /* Geometry — clipped corners, zero radius, one diagonal direction.
+     Hint cards are the one named exception (DESIGN.md §6): rounded,
+     never clipped, in *both* worlds. */
+  --radius-panel: 0px;
+  --radius-btn: 0px;
+  --radius-card: 6px;
+  --clip-panel: polygon(
+    0 14px,
+    14px 0,
+    100% 0,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0 100%
+  );
+  --clip-btn: polygon(
+    0 8px,
+    8px 0,
+    100% 0,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0 100%
+  );
+  --clip-card: none;
+
+  --corner-bracket-size: 14px;
+  --corner-bracket-inset: 6px;
+  --corner-bracket-opacity: 1; /* Forge marks the active panel with brackets */
+  --active-border-width: 0px; /* — so the alternate ring stays invisible */
+
+  --divider-skew: 4deg;
+
+  /* Motion — decisive (WORLDS.md §2). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --ease-scene: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-instant: 80ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
+  --dur-scene: 600ms;
+  --dur-ghost: 500ms;
+  --dur-pulse: 1000ms;
+
+  /* Spring physics — the one motion axis duration/ease tokens can't
+     express (Framer's useSpring takes stiffness/damping/mass, not a
+     duration). Plain numbers, read via lib/motion/useMotionTokens.ts
+     the same way the duration/ease tokens are, so Magnetic/
+     CustomCursor/HintCardDeck's "character" comes from here instead of
+     a hardcoded per-component constant. Forge: snappy, quick to
+     settle. */
+  --spring-stiffness: 300;
+  --spring-damping: 24;
+  --spring-mass: 0.6;
+}
+
+[data-world='grove'] {
+  --font-display: var(--font-display-grove-src), 'Fraunces', serif; /* SOFT + WONK axes, see app/layout.tsx */
+  --font-ui: var(--font-ui-grove-src), 'Nunito', sans-serif;
+
+  /* Sentence case, relaxed tracking (WORLDS.md §3) — same pixel sizes
+     as Forge (WORLDS.md doesn't call for a size difference, only
+     face/case/tracking), so layouts built against these roles don't
+     reflow when the world switches. */
+  --text-boss-size: clamp(40px, 4vw, 56px);
+  --text-boss-weight: 600;
+  --text-boss-width: normal; /* Fraunces uses SOFT/WONK, not a wdth axis */
+  --text-boss-tracking: 0em;
+  --text-boss-leading: 1.1;
+  --text-boss-case: none;
+  /* Fraunces' custom axes — SOFT rounds the terminals, WONK lets the
+     hand-drawn alternate glyphs in. Moderate values on purpose: enough
+     character to read as a different *identity* from Forge, not so
+     much it reads as a children's-book face (WORLDS.md §3: "warm, not
+     twee — this is a product for adults learning something hard"). */
+  --text-boss-variation: 'SOFT' 60, 'WONK' 0.4;
+
+  --text-zone-title-size: 32px;
+  --text-zone-title-weight: 600;
+  --text-zone-title-width: normal;
+  --text-zone-title-tracking: 0em;
+  --text-zone-title-leading: 1.1;
+  --text-zone-title-case: none;
+  --text-zone-title-variation: 'SOFT' 60, 'WONK' 0.3;
+
+  --text-stat-size: clamp(24px, 3vw, 40px);
+  --text-stat-weight: 600;
+  --text-stat-width: normal;
+  --text-stat-tracking: 0em;
+  --text-stat-leading: 1.1;
+  --text-stat-case: none;
+  /* Stat numbers stay closer to legible/data-like even in Grove — less
+     wonk than the boss name/zone title get. */
+  --text-stat-variation: 'SOFT' 40, 'WONK' 0.1;
+
+  --text-display-word-spacing: normal; /* no negative tracking to counteract here */
+
+  /* Geometry — rounded and organic, no clip-paths anywhere. */
+  --radius-panel: 16px;
+  --radius-btn: 12px;
+  --radius-card: 20px;
+  --clip-panel: none;
+  --clip-btn: none;
+  --clip-card: none;
+
+  --corner-bracket-size: 14px;
+  --corner-bracket-inset: 6px;
+  --corner-bracket-opacity: 0; /* Grove has no corner brackets */
+  --active-border-width: 2px; /* — the active panel gets a soft border instead */
+
+  --divider-skew: 0deg; /* the skewed-divider motif is a Forge-specific angularity */
+
+  /* Motion — gentle, ~1.4× Forge's durations, slight overshoot welcome. */
+  --ease-out: cubic-bezier(0.34, 1.1, 0.64, 1);
+  --ease-snap: cubic-bezier(0.34, 1.15, 0.64, 1);
+  --ease-scene: cubic-bezier(0.45, 0, 0.55, 1);
+  --dur-instant: 112ms;
+  --dur-fast: 196ms;
+  --dur-base: 308ms;
+  --dur-slow: 504ms;
+  --dur-scene: 840ms;
+  --dur-ghost: 700ms;
+  --dur-pulse: 1400ms;
+
+  /* Softer spring — lower stiffness settles slower, slightly higher
+     mass/damping keeps it from feeling floaty despite that. Same
+     ~1.4x-gentler character as the durations above, expressed in the
+     units a spring actually takes. */
+  --spring-stiffness: 180;
+  --spring-damping: 22;
+  --spring-mass: 0.8;
+}
+
+/* ================================================================== */
+/* Color — world × mode matrix (4 combinations). Neutrals, semantics,  */
+/* energy colors, glow, and shadow all live here.                      */
+/*                                                                      */
+/* :root carries the same values as forge/dark so there's a correct     */
+/* paint even before the no-flash inline scripts (see app/layout.tsx)   */
+/* or WorldProvider/ModeProvider have run.                              */
+/* ================================================================== */
+
+:root,
+[data-world='forge'][data-mode='dark'] {
+  /* Warm dark — the signature look: deep indigo-violet, not grey-black. */
+  --void: #12101c;
+  --void-rgb: 18, 16, 28;
+  --panel: #1a1728;
+  --raised: #241f35;
+  --line: #332b4a;
+  --line-hi: #4a3f6b;
+  --text-hi: #f0eae2;
+  --text-hi-rgb: 240, 234, 226;
+  --text-mid: #a79fb8;
+  --text-lo: #6e6684;
+
+  --pass: #4ade80;
+  --fail: #ff5c6a;
+  --fail-rgb: 255, 92, 106;
+
+  --gold: #f0b429;
+  --gold-rgb: 240, 180, 41;
+  --cyan: #22d3ee;
+  --cyan-rgb: 34, 211, 238;
+
+  --glow-accent: 0 0 20px rgba(var(--accent-rgb), 0.45);
+  --glow-gold: 0 0 22px rgba(var(--gold-rgb), 0.45);
+  --glow-cyan: 0 0 20px rgba(var(--cyan-rgb), 0.4);
+  --shadow-panel: none; /* Forge never uses soft shadows — glow carries emphasis instead */
+
+  --chrome-surface: linear-gradient(135deg, var(--panel), var(--raised));
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-world='forge'][data-mode='light'] {
+  /* Warm paper, never pure white. A comfort option — calmer than dark
+     mode on purpose. No glow, no gradients, hairlines + flat fills. */
+  --void: #f5f1e8;
+  --void-rgb: 245, 241, 232;
+  --panel: #fdfbf6;
+  --raised: #ebe4d6;
+  --line: #d8cfbe;
+  --line-hi: #bfb39c;
+  --text-hi: #1c1828;
+  --text-hi-rgb: 28, 24, 40;
+  --text-mid: #55506a;
+  --text-lo: #857e99;
+
+  --pass: #15803d;
+  --fail: #c62828;
+  --fail-rgb: 198, 40, 40;
+
+  --gold: #b07d0a;
+  --gold-rgb: 176, 125, 10;
+  --cyan: #0e7490;
+  --cyan-rgb: 14, 116, 144;
+
+  --glow-accent: none;
+  --glow-gold: none;
+  --glow-cyan: none;
+  --shadow-panel: none;
+
+  --chrome-surface: var(--panel); /* flat — no gradient in light mode */
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-world='grove'][data-mode='dark'] {
+  /* Twilight garden. */
+  --void: #1b2432;
+  --void-rgb: 27, 36, 50;
+  --panel: #24303f;
+  --raised: #2f3d4e;
+  --line: #3e4f63;
+  --line-hi: #55697f;
+  --text-hi: #f5f0e6;
+  --text-hi-rgb: 245, 240, 230;
+  --text-mid: #b4c2ce;
+  --text-lo: #7a8b9c;
+
+  --pass: #7dd87d;
+  --fail: #e88b8b; /* soft coral, never an alarm red — WORLDS.md §3 */
+  --fail-rgb: 232, 139, 139;
+
+  --gold: #ffd98a;
+  --gold-rgb: 255, 217, 138;
+  --cyan: #8dd9e8;
+  --cyan-rgb: 141, 217, 232;
+
+  /* Soft bloom, not hard neon — wider spread, lower intensity than Forge. */
+  --glow-accent: 0 0 28px rgba(var(--accent-rgb), 0.35);
+  --glow-gold: 0 0 30px rgba(var(--gold-rgb), 0.4);
+  --glow-cyan: 0 0 26px rgba(var(--cyan-rgb), 0.3);
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  --chrome-surface: linear-gradient(135deg, var(--panel), var(--raised));
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-world='grove'][data-mode='light'] {
+  /* Daylight meadow. */
+  --void: #fbf7ee;
+  --void-rgb: 251, 247, 238;
+  --panel: #fffdf8;
+  --raised: #f2ebdc;
+  --line: #dfd5c2;
+  --line-hi: #c4b79e;
+  --text-hi: #2e3a2e;
+  --text-hi-rgb: 46, 58, 46;
+  --text-mid: #5c6b5c;
+  --text-lo: #8a9a8a;
+
+  --pass: #3f8f4f;
+  --fail: #c4707a; /* soft coral, never an alarm red — WORLDS.md §3 */
+  --fail-rgb: 196, 112, 122;
+
+  --gold: #c99a2e;
+  --gold-rgb: 201, 154, 46;
+  --cyan: #4a9cb0;
+  --cyan-rgb: 74, 156, 176;
+
+  /* A trace of bloom survives in light mode — Grove stays "alive"
+     even at its calmest, unlike Forge which goes to zero glow. */
+  --glow-accent: 0 0 18px rgba(var(--accent-rgb), 0.15);
+  --glow-gold: 0 0 20px rgba(var(--gold-rgb), 0.18);
+  --glow-cyan: 0 0 18px rgba(var(--cyan-rgb), 0.12);
+  --shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  --chrome-surface: var(--panel);
+
+  --accent: var(--text-hi);
+  --accent-rgb: var(--text-hi-rgb);
+  --accent-text: var(--text-hi);
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+/* ---------------------------------------------------------------- */
+/* Per-language accent — WORLDS.md §5: "same hues in both worlds;    */
+/* only the light/dark variants differ." Scoped by [data-mode]       */
+/* ONLY, never by world. Base blocks (no mode qualifier) serve dark   */
+/* mode; [data-mode='light'] overrides with darkened/desaturated      */
+/* variants tuned for 4.5:1 on a light --void. --accent-dim is        */
+/* re-derived in every block (never a literal color) so it always     */
+/* tracks that block's own --accent-rgb — custom properties           */
+/* substitute var() at the scope where they're declared, not per-      */
+/* descendant, so this can't just live in one place.                   */
+/* ---------------------------------------------------------------- */
+
+[data-lang='python'] {
+  --accent: #e89b2c;
+  --accent-rgb: 232, 155, 44;
+  --accent-text: #ffb95c;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='javascript'] {
+  --accent: #e5d63c;
+  --accent-rgb: 229, 214, 60;
+  --accent-text: #f0e777;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='typescript'] {
+  --accent: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+  --accent-text: #7fabfa;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='go'] {
+  --accent: #22d3ee;
+  --accent-rgb: 34, 211, 238;
+  --accent-text: #7de6f6;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='rust'] {
+  --accent: #f26430;
+  --accent-rgb: 242, 100, 48;
+  --accent-text: #ff9169;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='java'] {
+  --accent: #d9544f;
+  --accent-rgb: 217, 84, 79;
+  --accent-text: #f08b86;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='cpp'] {
+  --accent: #ec4899;
+  --accent-rgb: 236, 72, 153;
+  --accent-text: #f57eb8;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-lang='sql'] {
+  --accent: #8b5cf6;
+  --accent-rgb: 139, 92, 246;
+  --accent-text: #b79bfa;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+[data-mode='light'] [data-lang='python'] {
+  --accent: #8a5a0b;
+  --accent-rgb: 138, 90, 11;
+  --accent-text: #8a5a0b;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='javascript'] {
+  --accent: #7a6b0a;
+  --accent-rgb: 122, 107, 10;
+  --accent-text: #7a6b0a;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='typescript'] {
+  --accent: #1d4ed8;
+  --accent-rgb: 29, 78, 216;
+  --accent-text: #1d4ed8;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='go'] {
+  --accent: #0e7490;
+  --accent-rgb: 14, 116, 144;
+  --accent-text: #0e7490;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='rust'] {
+  --accent: #9a3412;
+  --accent-rgb: 154, 52, 18;
+  --accent-text: #9a3412;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='java'] {
+  --accent: #991b1b;
+  --accent-rgb: 153, 27, 27;
+  --accent-text: #991b1b;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='cpp'] {
+  --accent: #9d174d;
+  --accent-rgb: 157, 23, 77;
+  --accent-text: #9d174d;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+[data-mode='light'] [data-lang='sql'] {
+  --accent: #5b21b6;
+  --accent-rgb: 91, 33, 182;
+  --accent-text: #5b21b6;
+  --accent-dim: rgba(var(--accent-rgb), 0.4);
+}
+
+/* ---------------------------------------------------------------- */
+/* Structural utility classes — geometry/color combos that can't be  */
+/* expressed as a single Tailwind theme value. These are what let     */
+/* components stay world-agnostic: the same class name resolves to    */
+/* clipped-and-square in Forge, rounded-and-soft in Grove, purely      */
+/* because the tokens it reads differ.                                */
+/* ---------------------------------------------------------------- */
+
+/* font-family was missing here entirely until this pass — these three
+   roles silently inherited body's --font-ui instead of ever rendering
+   in the display face (Archivo/Fraunces). Caught by actually reading
+   Grove's computed font-family instead of trusting the class name. */
+.text-boss,
+.text-zone-title,
+.text-stat {
+  font-family: var(--font-display);
+  word-spacing: var(--text-display-word-spacing);
+}
+.text-boss {
+  font-stretch: var(--text-boss-width);
+  text-transform: var(--text-boss-case);
+  font-variation-settings: var(--text-boss-variation);
+}
+.text-zone-title {
+  font-stretch: var(--text-zone-title-width);
+  text-transform: var(--text-zone-title-case);
+  font-variation-settings: var(--text-zone-title-variation);
+}
+.text-stat {
+  font-stretch: var(--text-stat-width);
+  text-transform: var(--text-stat-case);
+  font-variation-settings: var(--text-stat-variation);
+}
+
+/* clip-path AND border-radius are both always applied — Forge sets a
+   real polygon with zero radius, Grove sets `none` with a real radius,
+   so whichever is non-trivial wins visually. No component branches on
+   world to pick one or the other. */
+.clip-panel {
+  clip-path: var(--clip-panel);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+.clip-btn {
+  clip-path: var(--clip-btn);
+  border-radius: var(--radius-btn);
+}
+.clip-card {
+  clip-path: var(--clip-card);
+  border-radius: var(--radius-card);
+}
+
+/* Two-stop gradient chrome surface (flat fill in light mode — see the
+   --chrome-surface redefinition above). Never used on the editor. */
+.chrome-surface {
+  background: var(--chrome-surface);
+}
+
+/* Active-panel indicator — both mechanisms always render; only one is
+   ever visually non-zero per world (WORLDS.md §8: "components should
+   almost never branch on world"). */
+.corner-bracket {
+  position: absolute;
+  width: var(--corner-bracket-size);
+  height: var(--corner-bracket-size);
+  border-color: var(--accent);
+  opacity: var(--corner-bracket-opacity);
+  pointer-events: none;
+}
+.corner-bracket--tl {
+  top: var(--corner-bracket-inset);
+  left: var(--corner-bracket-inset);
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.corner-bracket--tr {
+  top: var(--corner-bracket-inset);
+  right: var(--corner-bracket-inset);
+  border-top: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+.corner-bracket--bl {
+  bottom: var(--corner-bracket-inset);
+  left: var(--corner-bracket-inset);
+  border-bottom: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.corner-bracket--br {
+  bottom: var(--corner-bracket-inset);
+  right: var(--corner-bracket-inset);
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+/* The active-panel ring: an inset box-shadow (doesn't consume layout
+   space like a real border would) at --active-border-width — 0 in
+   Forge (brackets carry the signal instead), 2px in Grove. Combined
+   with the panel's own glow via Panel.tsx so both layer correctly. */
+.active-ring {
+  box-shadow: inset 0 0 0 var(--active-border-width) var(--accent);
+}
+
+/* ---------------------------------------------------------------- */
+/* Boss/opponent frame — ornamental treatment. Fantasy, not military. */
+/* Always --accent, never gold (DESIGN.md §4 role separation). The     */
+/* heavier border is the one place a chrome border exceeds 1px, in     */
+/* both worlds — geometry (clip vs radius) still comes from tokens.    */
+/* ---------------------------------------------------------------- */
+.boss-frame {
+  border-width: 3px;
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+
+.boss-flourish {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.boss-flourish--tl {
+  top: -5px;
+  left: -5px;
+}
+.boss-flourish--tr {
+  top: -5px;
+  right: -5px;
+}
+.boss-flourish--bl {
+  bottom: -5px;
+  left: -5px;
+}
+.boss-flourish--br {
+  bottom: -5px;
+  right: -5px;
+}
+
+/* No clip-path here (deliberately) — the badge is too small for the
+   8px clip-btn diagonal without it eating into the "BOSS" text itself.
+   A flat rectangle still reads as a plated nameplate at this size. */
+.boss-nameplate {
+  position: absolute;
+  top: -11px;
+  left: 24px;
+  background: var(--accent);
+  color: var(--void);
+}
+
+/* Low meter and expiring timers don't change color to a third semantic
+   hue — they pulse opacity instead, at --dur-pulse. Low meter
+   additionally turns the number --fail; that's applied where the
+   number renders, not here. */
+@keyframes pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.pulse {
+  animation: pulse-opacity var(--dur-pulse) ease-in-out infinite;
+}
+
+/* A gold glow pulse for loot/reward moments — opacity only. */
+@keyframes loot-pulse {
+  0%,
+  100% {
+    box-shadow: var(--glow-gold);
+  }
+  50% {
+    box-shadow: none;
+  }
+}
+.loot-glow {
+  box-shadow: var(--glow-gold);
+}
+.loot-pulse {
+  animation: loot-pulse 1600ms ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------- */
+/* Zone B — fight screen. Reactive-only motion: these all fire in    */
+/* response to a Run result, never ambiently, except .monster-breathe */
+/* which is the one explicit exception DESIGN.md §6 carves out.      */
+/* ---------------------------------------------------------------- */
+
+/* Opponent idle breathing loop — 4s, ±2px translate. The only ambient
+   animation allowed anywhere in Zone B, in either world. */
+@keyframes monster-breathe {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+.monster-breathe {
+  animation: monster-breathe 4s ease-in-out infinite;
+}
+
+/* Single accent flash across the frame on a hit. Opacity only —
+   border color/width are static, not part of the animation. */
+@keyframes hit-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.monster-hit-flash {
+  animation: hit-flash var(--dur-slow) var(--ease-out) 1;
+  border: 2px solid var(--accent);
+}
+
+/* A failing test's reaction on the opponent sprite itself — WORLDS.md
+   §4: "Counter-attack" in Forge (a sharp brightness/saturation punch,
+   reads as a retaliatory hit), "the creature droops, the light dims"
+   in Grove (settles down and darkens, no punch). Same trigger
+   (data-monster-state="attack", set once from FightScreen with no
+   world check), different keyframes per world — the fork lives here,
+   not in a component. */
+@keyframes monster-counterattack {
+  0%,
+  100% {
+    filter: none;
+  }
+  30% {
+    filter: brightness(1.3) saturate(1.4);
+  }
+}
+@keyframes monster-droop {
+  0% {
+    transform: translateY(2px) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    transform: translateY(10px) rotate(-4deg);
+    opacity: 0.55;
+    filter: brightness(0.75) saturate(0.6);
+  }
+  100% {
+    transform: translateY(2px) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+}
+[data-world='forge'] [data-monster-state='attack'] {
+  animation: monster-counterattack var(--dur-slow) var(--ease-out) 1;
+}
+[data-world='grove'] [data-monster-state='attack'] {
+  animation: monster-droop var(--dur-scene) var(--ease-out) 1;
+}
+
+/* Screen-edge pulse on a failing test — opacity only, no screen shake
+   anywhere except the kill ceremony. */
+@keyframes vignette-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.vignette-pulse {
+  animation: vignette-pulse var(--dur-slow) var(--ease-out) 1;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(var(--fail-rgb), 0.35) 100%);
+}
+
+/* Defeat overlay scrim — a flat void fill with alpha, not a new hex. */
+.overlay-scrim {
+  background-color: rgba(var(--void-rgb), 0.92);
+}
+
+/* CodeMirror damage-line decoration — failing line at 12% --fail,
+   set by lib/editor/damageLineExtension.ts. Never a glow, never near
+   the editor otherwise — the editor stays flat and still in every
+   world × mode combination. */
+.cm-damage-line {
+  background-color: rgba(var(--fail-rgb), 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* Breathing → static, not a frozen mid-keyframe offset. */
+  .monster-breathe {
+    animation: none;
+    transform: none;
+  }
+  /* A pulsing glow → a fixed, permanently-on glow instead of motion. */
+  .loot-pulse {
+    animation: none;
+    box-shadow: var(--glow-gold);
+  }
+  /* Counter-attack/droop → an instant, static version of the same
+     end-state cue instead of an animated one. */
+  [data-world='forge'] [data-monster-state='attack'] {
+    animation: none;
+    filter: brightness(1.3) saturate(1.4);
+  }
+  [data-world='grove'] [data-monster-state='attack'] {
+    animation: none;
+    transform: translateY(10px) rotate(-4deg);
+    opacity: 0.55;
+    filter: brightness(0.75) saturate(0.6);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Custom cursor (§8.1, components/motion/CustomCursor.tsx) — hides   */
+/* the native cursor everywhere it's mounted (showcase surfaces only) */
+/* except over the editor, where text selection must keep working    */
+/* exactly as normal. Reduced-motion and touch devices never set the  */
+/* attribute in the first place (CustomCursor.tsx itself no-ops), so  */
+/* no separate reduced-motion override is needed here.                */
+/* ---------------------------------------------------------------- */
+body[data-custom-cursor] {
+  cursor: none;
+}
+body[data-custom-cursor] .cm-editor,
+body[data-custom-cursor] .cm-editor * {
+  cursor: auto;
+}
+
+/* ---------------------------------------------------------------- */
+/* Kill ceremony (§3, lib/motion/killCeremony.ts) reduced-motion       */
+/* substitute — "shake -> border flash" (§7 rule 4). The GSAP timeline */
+/* itself no-ops under reduced motion and applies this class instead. */
+/* ---------------------------------------------------------------- */
+.kill-flash-static {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* ---------------------------------------------------------------- */
+/* World crossfade (WORLDS.md §7) — "a 600ms crossfade... never a     */
+/* hard swap." Paired with the View Transitions API in                */
+/* lib/world/WorldProvider.tsx; this is the actual crossfade curve,    */
+/* not a browser default. Falls back silently where unsupported.      */
+/* ---------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
